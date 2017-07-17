@@ -1,5 +1,8 @@
 package ch.mtrail.tibrv.playground;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -16,6 +19,7 @@ import com.tibco.tibrv.TibrvTransport;
 public class Listen implements TibrvMsgCallback {
 
 	private boolean performDispose = false;
+	private boolean performDispatch = true;
 
 	public Listen(final String service, final String network, final String daemon, final List<String> subjects) {
 
@@ -52,19 +56,29 @@ public class Listen implements TibrvMsgCallback {
 			}
 		}
 	}
-	
+
 	public void dispatch() {
-		// dispatch Tibrv events
 		while (true) {
-			try {
-				// Wait max 1 sec, to listen on keyboard.
-				Tibrv.defaultQueue().timedDispatch(1);
-			} catch (final TibrvException e) {
-				System.err.println("Exception dispatching default queue:");
-				e.printStackTrace();
-				System.exit(0);
-			} catch (final InterruptedException ie) {
-				System.exit(0);
+			if (performDispatch) {
+				// dispatch Tibrv events
+				try {
+					// Wait max 1 sec, to listen on keyboard.
+					Tibrv.defaultQueue().timedDispatch(1);
+				} catch (final TibrvException e) {
+					System.err.println("Exception dispatching default queue:");
+					e.printStackTrace();
+					System.exit(0);
+				} catch (final InterruptedException ie) {
+					System.exit(0);
+				}
+
+			} else {
+				// Dispatch is disabled, just idle
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -74,7 +88,7 @@ public class Listen implements TibrvMsgCallback {
 		System.out.println((new Date()).toString() + ": subject=" + msg.getSendSubject() + ", reply="
 				+ msg.getReplySubject() + ", message=" + msg.toString());
 		System.out.flush();
-		
+
 		if (performDispose) {
 			msg.dispose();
 		}
@@ -86,6 +100,14 @@ public class Listen implements TibrvMsgCallback {
 
 	public void setPerformDispose(final boolean performDispose) {
 		this.performDispose = performDispose;
+	}
+
+	public boolean isPerformDispatch() {
+		return performDispatch;
+	}
+
+	public void setPerformDispatch(boolean performDispatch) {
+		this.performDispatch = performDispatch;
 	}
 
 	public static void main(final String args[]) {
@@ -122,8 +144,51 @@ public class Listen implements TibrvMsgCallback {
 		if (argParser.isFlagSet("perform-dispose")) {
 			listen.setPerformDispose();
 		}
-		
+
+		listen.startKeyListener();
+
 		listen.dispatch();
+	}
+
+	private void startKeyListener() {
+		printKeyUsage();
+
+		new Thread(() -> {
+			try (BufferedReader input = new BufferedReader(new InputStreamReader(System.in, "UTF-8"))) {
+				while (true) {
+					char c = (char) input.read();
+
+					switch (c) {
+					case 'd':
+					case 'D':
+						System.out.println("Dispatcher is DISABLED");
+						setPerformDispatch(false);
+						break;
+
+					case 'e':
+					case 'E':
+						System.out.println("Dispatcher is ENABLED");
+						setPerformDispatch(true);
+						break;
+						
+					case '\r':
+					case '\n':
+						break;
+
+					default:
+						printKeyUsage();
+						break;
+					}
+
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}).start();
+	}
+
+	private void printKeyUsage() {
+		System.out.println("Press\n\t\"D\" to disable Dispatcher\n\t\"E\" to enable Dispatcher ");
 	}
 
 }

@@ -3,7 +3,6 @@
 * FT Group
 * DQ Group
 * Multi Dispatcher example rein ziehen
-* Angehalten Queue
 
 # Example code DONE
 * basic Async
@@ -11,6 +10,7 @@
 * Send huge msg
 * Objekt Bäume
 * Certified Message
+* Angehalten Queue
 
 # Vorführen
 * Basic setup

@@ -1,9 +1,11 @@
 package ch.mtrail.tibrv.playground;
 
-import java.util.ArrayList;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Date;
-import java.util.List;
-import java.util.Objects;
 
 import com.tibco.tibrv.Tibrv;
 import com.tibco.tibrv.TibrvException;
@@ -13,11 +15,17 @@ import com.tibco.tibrv.TibrvMsgCallback;
 import com.tibco.tibrv.TibrvRvdTransport;
 import com.tibco.tibrv.TibrvTransport;
 
-public class Listen implements TibrvMsgCallback {
+public class ListenFiles implements TibrvMsgCallback {
 
 	private boolean performDispose = false;
+	private Path dstFolder = null;
 
-	public Listen(final String service, final String network, final String daemon, final List<String> subjects) {
+	public ListenFiles(final String service, final String network, final String daemon, final String subject,
+			final String folder) {
+
+		if (folder != null && !folder.isEmpty()) {
+			this.dstFolder = Paths.get(folder);
+		}
 
 		// open Tibrv in native implementation
 		try {
@@ -40,16 +48,14 @@ public class Listen implements TibrvMsgCallback {
 			System.exit(0);
 		}
 
-		for (String subject : subjects) {
-			// create listener using default queue
-			try {
-				new TibrvListener(Tibrv.defaultQueue(), this, transport, subject, null);
-				System.err.println("Listening on: " + subject);
-			} catch (final TibrvException e) {
-				System.err.println("Failed to create listener:");
-				e.printStackTrace();
-				System.exit(0);
-			}
+		// create listener using default queue
+		try {
+			new TibrvListener(Tibrv.defaultQueue(), this, transport, subject, null);
+			System.err.println("Listening on: " + subject);
+		} catch (final TibrvException e) {
+			System.err.println("Failed to create listener:");
+			e.printStackTrace();
+			System.exit(0);
 		}
 	}
 	
@@ -57,8 +63,7 @@ public class Listen implements TibrvMsgCallback {
 		// dispatch Tibrv events
 		while (true) {
 			try {
-				// Wait max 1 sec, to listen on keyboard.
-				Tibrv.defaultQueue().timedDispatch(1);
+				Tibrv.defaultQueue().dispatch();
 			} catch (final TibrvException e) {
 				System.err.println("Exception dispatching default queue:");
 				e.printStackTrace();
@@ -71,13 +76,37 @@ public class Listen implements TibrvMsgCallback {
 
 	@Override
 	public void onMsg(final TibrvListener listener, final TibrvMsg msg) {
-		System.out.println((new Date()).toString() + ": subject=" + msg.getSendSubject() + ", reply="
-				+ msg.getReplySubject() + ", message=" + msg.toString());
-		System.out.flush();
-		
+		try {
+			System.out.println((new Date()).toString() + //
+					": subject=" + msg.getSendSubject() + //
+					", filename=" + msg.get("FILENAME") + //
+					", size=" + msg.get("SIZE") + // 
+					", mime=" + ((TibrvMsg)msg.get("META")).get("mimeType"));
+			System.out.flush();
+
+			if (dstFolder != null) {
+				try {
+					storeFile(msg);
+				} catch (final IOException e) {
+					e.printStackTrace();
+				}
+			}
+
+		} catch (final TibrvException e) {
+			e.printStackTrace();
+		}
+
 		if (performDispose) {
 			msg.dispose();
 		}
+	}
+
+	private void storeFile(final TibrvMsg msg) throws TibrvException, IOException {
+		final String fileName = (String) msg.get("FILENAME");
+		final byte[] content = (byte[]) msg.get("CONTENT");
+
+		final File file = new File(dstFolder.toAbsolutePath().toString(), fileName);
+		Files.write(file.toPath(), content);
 	}
 
 	public void setPerformDispose() {
@@ -92,32 +121,18 @@ public class Listen implements TibrvMsgCallback {
 		// Debug.diplayEnvInfo();
 
 		final ArgParser argParser = new ArgParser("TibRvListen");
-		argParser.setOptionalParameter("service", "network", "daemon");
+		// If folder is not set, we perform a dry run and just print out what we received.
+		argParser.setOptionalParameter("service", "network", "daemon", "folder");
 		argParser.setRequiredArg("subject");
 		argParser.setFlags("perform-dispose");
-		argParser.setOptionalArg("addtional-subject1", "addtional-subject2", "addtional-subject3");
 		argParser.parse(args);
 
-		final List<String> subjects = new ArrayList<>();
-		try {
-			subjects.add(argParser.getArgument("subject"));
-
-			for (int i = 1; i <= 3; i++) {
-				String addSubject = argParser.getArgument("addtional-subject" + i);
-				if (Objects.nonNull(addSubject)) {
-					subjects.add(addSubject);
-				}
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-
-		final Listen listen = new Listen(//
+		final ListenFiles listen = new ListenFiles(//
 				argParser.getParameter("service"), //
 				argParser.getParameter("network"), //
 				argParser.getParameter("daemon"), //
-				subjects);
+				argParser.getArgument("subject"), //
+				argParser.getParameter("folder"));
 
 		if (argParser.isFlagSet("perform-dispose")) {
 			listen.setPerformDispose();

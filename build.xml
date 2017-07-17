@@ -1,71 +1,119 @@
 <!-- https://ant.apache.org/manual/tutorial-HelloWorldWithAnt.html -->
 <project name="TibRvPlayground" basedir="." default="main">
-    <property name="src.dir"     value="src"/>
+	<property name="src.dir" value="src" />
 
-    <property name="build.dir"   value="build"/>
-    <property name="classes.dir" value="${build.dir}/classes"/>
-    <property name="jar.dir"     value="${build.dir}/jar"/>
-    <property name="lib.dir"     value="lib"/>
+	<property name="build.dir" value="build" />
+	<property name="classes.dir" value="${build.dir}/classes" />
+	<property name="jar.dir" value="${build.dir}/jar" />
+	<property name="lib.dir" value="lib" />
 
-	<property name="jar-name-listen"  value="Listen"/>
-    <property name="main-class-listen"  value="ch.mtrail.tibrv.playground.Listen"/>
-	
-	<property name="jar-name-send"  value="Send"/>
-	<property name="main-class-send"  value="ch.mtrail.tibrv.playground.Send"/>
+	<property name="jar-name-listen" value="Listen" />
+	<property name="main-class-listen" value="ch.mtrail.tibrv.playground.Listen" />
 
-    <path id="classpath">
-        <fileset dir="${lib.dir}" includes="**/*.jar"/>
-    </path>
+	<property name="jar-name-listen-files" value="ListenFiles" />
+	<property name="main-class-listen-files" value="ch.mtrail.tibrv.playground.ListenFiles" />
 
-    <target name="clean">
-        <delete dir="${build.dir}"/>
-    </target>
+	<property name="jar-name-send" value="Send" />
+	<property name="main-class-send" value="ch.mtrail.tibrv.playground.Send" />
 
-    <target name="compile">
-        <mkdir dir="${classes.dir}"/>
-        <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" includeantruntime="false" debug="true" debuglevel="lines,vars,source"/>
-    </target>
+	<property name="jar-name-send-files" value="SendFiles" />
+	<property name="main-class-send-files" value="ch.mtrail.tibrv.playground.SendFiles" />
 
-    <target name="jar" depends="compile">
-        <mkdir dir="${jar.dir}"/>
-        <jar destfile="${jar.dir}/${jar-name-listen}.jar" basedir="${classes.dir}">
-            <manifest>
-                <attribute name="Main-Class" value="${main-class-listen}"/>
-            </manifest>
-        </jar>
+	<path id="classpath">
+		<fileset dir="${lib.dir}" includes="**/*.jar" />
+	</path>
+
+	<target name="clean">
+		<delete dir="${build.dir}" />
+	</target>
+
+	<target name="compile">
+		<mkdir dir="${classes.dir}" />
+		<javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" includeantruntime="false" debug="true" debuglevel="lines,vars,source" />
+	</target>
+
+	<target name="jar" depends="compile">
+		<mkdir dir="${jar.dir}" />
+		<jar destfile="${jar.dir}/${jar-name-listen}.jar" basedir="${classes.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="${main-class-listen}" />
+			</manifest>
+		</jar>
+		<jar destfile="${jar.dir}/${jar-name-listen-files}.jar" basedir="${classes.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="${main-class-listen-files}" />
+			</manifest>
+		</jar>
 		<jar destfile="${jar.dir}/${jar-name-send}.jar" basedir="${classes.dir}">
-            <manifest>
-                <attribute name="Main-Class" value="${main-class-send}"/>
-            </manifest>
-        </jar>
-    </target>
+			<manifest>
+				<attribute name="Main-Class" value="${main-class-send}" />
+			</manifest>
+		</jar>
+		<jar destfile="${jar.dir}/${jar-name-send-files}.jar" basedir="${classes.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="${main-class-send-files}" />
+			</manifest>
+		</jar>
+	</target>
 
-    <target name="runListen" depends="jar">
-       <java fork="true" classname="${main-class-listen}">
-            <classpath>
-                <path refid="classpath"/>
-                <path location="${jar.dir}/${jar-name-listen}.jar"/>
-            </classpath>
-            <arg line="-service 7201 -network &quot;;224.1.1.1&quot; HH.TEST"/>
-        </java>
-    </target>
-	
+	<target name="runListen" depends="jar">
+		<java fork="true" classname="${main-class-listen}">
+			<classpath>
+				<path refid="classpath" />
+				<path location="${jar.dir}/${jar-name-listen}.jar" />
+			</classpath>
+			<arg line="-service 7201 -network &quot;;224.1.1.1&quot; HH.TEST" />
+		</java>
+	</target>
+
+	<target name="runListenFiles" depends="jar">
+		<java fork="true" classname="${main-class-listen-files}">
+			<classpath>
+				<path refid="classpath" />
+				<path location="${jar.dir}/${jar-name-listen-files}.jar" />
+			</classpath>
+			<arg line="-service 7201 -network &quot;;224.1.1.1&quot; -folder ${build.dir}/inbound HH.TEST.FILES" />
+		</java>
+	</target>
+
 	<target name="runSend" depends="jar">
-       <java fork="true" classname="${main-class-send}">
-            <classpath>
-                <path refid="classpath"/>
-                <path location="${jar.dir}/${jar-name-send}.jar"/>
-            </classpath>
-            <arg line="-service 7201 -network &quot;;224.1.1.1&quot; &quot;Hallo du schöne Welt&quot; HH.TEST"/>
-        </java>
-    </target>
+		<java fork="true" classname="${main-class-send}">
+			<classpath>
+				<path refid="classpath" />
+				<path location="${jar.dir}/${jar-name-send}.jar" />
+			</classpath>
+			<arg line="-service 7201 -network &quot;;224.1.1.1&quot; &quot;Hallo du schöne Welt&quot; HH.TEST" />
+		</java>
+	</target>
 
-    <target name="clean-build" depends="clean,jar"/>
+	<target name="runSendStress" depends="jar">
+		<java fork="true" classname="${main-class-send}">
+			<classpath>
+				<path refid="classpath" />
+				<path location="${jar.dir}/${jar-name-send}.jar" />
+			</classpath>
+			<arg line="-service 7201 -network &quot;;224.1.1.1&quot; -interval 0 &quot;This is a DDOS attack&quot; HH.TEST.DOS" />
+		</java>
+	</target>
 
-	<target name="listen" depends="clean,runListen"/>
-	<target name="send" depends="clean,runSend"/>
-	
-	<target name="main" depends="listen"/>
-	
+	<target name="runSendFiles" depends="jar">
+		<java fork="true" classname="${main-class-send-files}">
+			<classpath>
+				<path refid="classpath" />
+				<path location="${jar.dir}/${jar-name-send-files}.jar" />
+			</classpath>
+			<arg line="-service 7201 -network &quot;;224.1.1.1&quot; -folder ${jar.dir}/ HH.TEST.FILES" />
+		</java>
+	</target>
+
+	<target name="clean-build" depends="clean,jar" />
+
+	<target name="listen" depends="clean,runListen" />
+	<target name="listen-files" depends="clean,runListenFiles" />
+	<target name="send" depends="clean,runSend" />
+	<target name="send-ddos" depends="clean,runSendStress" />
+	<target name="send-files" depends="clean,runSendFiles" />
+
+	<target name="main" depends="listen" />
 
 </project>

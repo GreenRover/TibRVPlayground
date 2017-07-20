@@ -1,8 +1,6 @@
 package ch.mtrail.tibrv.playground;
 
-import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Date;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -12,17 +10,17 @@ import com.tibco.tibrv.TibrvMsg;
 import com.tibco.tibrv.TibrvRvdTransport;
 import com.tibco.tibrv.TibrvTransport;
 
-public class Send {
+public class SendRequestReply {
 
 	private TibrvTransport transport = null;
-	private final List<String> subjects;
+	private final String subject;
 	private final String FIELD_NAME = "DATA";
 	private final String FIELD_INDEX = "INDEX";
 	private int msgSend = 0;
 
-	public Send(final String service, final String network, final String daemon, final List<String> subjects) {
+	public SendRequestReply(final String service, final String network, final String daemon, final String subject) {
 
-		this.subjects = subjects;
+		this.subject = subject;
 
 		// open Tibrv in native implementation
 		try {
@@ -46,31 +44,32 @@ public class Send {
 	}
 
 	public void send(final String msgString) throws TibrvException {
-		for (final String subject : subjects) {
-			// Create the message
-			final TibrvMsg msg = new TibrvMsg();
+		// Create the message
+		final TibrvMsg msg = new TibrvMsg();
 
-			// Set send subject into the message
-			try {
-				msg.setSendSubject(subject);
-			} catch (final TibrvException e) {
-				System.err.println("Failed to set send subject:");
-				e.printStackTrace();
-				System.exit(0);
-			}
-
-			msg.add(FIELD_NAME, msgString);
-			msg.add(FIELD_INDEX, msgSend);
-			transport.send(msg);
-			msg.dispose();
-
-			msgSend++;
+		// Set send subject into the message
+		try {
+			msg.setSendSubject(subject);
+		} catch (final TibrvException e) {
+			System.err.println("Failed to set send subject:");
+			e.printStackTrace();
+			System.exit(0);
 		}
-	}
 
-	public void printStatus() {
-		final NumberFormat nf = NumberFormat.getInstance();
-		System.out.print("Msg send: " + nf.format(msgSend) + "\n");
+		msg.add(FIELD_NAME, msgString);
+		msg.add(FIELD_INDEX, msgSend);
+		System.out.println(
+				(new Date()).toString() + " QUSTION: subject=" + msg.getSendSubject() + ", message=" + msg.toString());
+
+		// Timeout 30sec
+		final TibrvMsg replyMsg = transport.sendRequest(msg, 30);
+
+		System.out.println(
+				(new Date()).toString() + " REPLY: subject=" + msg.getSendSubject() + ", message=" + msg.toString());
+
+		msg.dispose();
+		replyMsg.dispose();
+		msgSend++;
 	}
 
 	public static void main(final String args[]) {
@@ -80,29 +79,13 @@ public class Send {
 		// Interval milli seconds to repeat message
 		argParser.setOptionalParameter("service", "network", "daemon", "interval");
 		argParser.setRequiredArg("msg", "subject");
-		argParser.setOptionalArg("addtional-subject1", "addtional-subject2", "addtional-subject3");
 		argParser.parse(args);
 
-		final List<String> subjects = new ArrayList<>();
-		try {
-			subjects.add(argParser.getArgument("subject"));
-
-			for (int i = 1; i <= 3; i++) {
-				final String addSubject = argParser.getArgument("addtional-subject" + i);
-				if (Objects.nonNull(addSubject)) {
-					subjects.add(addSubject);
-				}
-			}
-		} catch (final Exception e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-
-		final Send send = new Send(//
+		final SendRequestReply send = new SendRequestReply(//
 				argParser.getParameter("service"), //
 				argParser.getParameter("network"), //
 				argParser.getParameter("daemon"), //
-				subjects);
+				argParser.getArgument("subject"));
 
 		try {
 			send.send(argParser.getArgument("msg"));
@@ -113,11 +96,10 @@ public class Send {
 				final int intervalMs = Integer.parseInt(intervalStr);
 				while (true) {
 					if (intervalMs > 0) {
-						// -interval 0  == hard core stress test
+						// -interval 0 == hard core stress test
 						TimeUnit.MILLISECONDS.sleep(intervalMs);
 					}
 					send.send(argParser.getArgument("msg"));
-					send.printStatus();
 				}
 			}
 		} catch (TibrvException | InterruptedException e) {

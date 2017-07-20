@@ -10,6 +10,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 import com.tibco.tibrv.Tibrv;
 import com.tibco.tibrv.TibrvException;
+import com.tibco.tibrv.TibrvListener;
 import com.tibco.tibrv.TibrvMsg;
 import com.tibco.tibrv.TibrvRvdTransport;
 import com.tibco.tibrv.TibrvTransport;
@@ -46,6 +47,17 @@ public class SendFiles {
 			e.printStackTrace();
 			System.exit(0);
 		}
+		
+		// Create error listener
+		try {
+			final ErrorLogger errorLogger = new ErrorLogger();
+			new TibrvListener(Tibrv.defaultQueue(), errorLogger, transport, "_RV.ERROR.>", null);
+			new TibrvListener(Tibrv.defaultQueue(), errorLogger, transport, "_RV.WARN.>", null);
+		} catch (final TibrvException e) {
+			System.err.println("Failed to create ErrorHandler:");
+			e.printStackTrace();
+			System.exit(0);
+		}
 	}
 
 	public void send(final Path file) throws TibrvException, IOException {
@@ -73,6 +85,8 @@ public class SendFiles {
 		metaMsg.add("creationTime", attributes.creationTime(), fileTimeType);
 		metaMsg.add("lastAccessTime", attributes.lastAccessTime(), fileTimeType);
 		metaMsg.add("lastModifiedTime", attributes.lastModifiedTime(), fileTimeType);
+		// TibrvMsg.DATETIME
+		// new TibrvDate()
 		final String mimeType = Files.probeContentType(file);
 		if (mimeType != null) {
 			// NULL is not permitted: java.lang.IllegalArgumentException: Field data is null

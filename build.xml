@@ -13,11 +13,17 @@
 	<property name="jar-name-listen-files" value="ListenFiles" />
 	<property name="main-class-listen-files" value="ch.mtrail.tibrv.playground.ListenFiles" />
 
+	<property name="jar-name-listen-multi-queue" value="ListenMultiQueue" />
+	<property name="main-class-listen-multi-queue" value="ch.mtrail.tibrv.playground.ListenMultiQueue" />
+
 	<property name="jar-name-send" value="Send" />
 	<property name="main-class-send" value="ch.mtrail.tibrv.playground.Send" />
 
 	<property name="jar-name-send-files" value="SendFiles" />
 	<property name="main-class-send-files" value="ch.mtrail.tibrv.playground.SendFiles" />
+
+	<property name="jar-name-send-request-reply" value="SendRequestReply" />
+	<property name="main-class-send-request-reply" value="ch.mtrail.tibrv.playground.SendRequestReply" />
 
 	<path id="classpath">
 		<fileset dir="${lib.dir}" includes="**/*.jar" />
@@ -44,6 +50,11 @@
 				<attribute name="Main-Class" value="${main-class-listen-files}" />
 			</manifest>
 		</jar>
+		<jar destfile="${jar.dir}/${jar-name-listen-multi-queue}.jar" basedir="${classes.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="${main-class-listen-multi-queue}" />
+			</manifest>
+		</jar>
 		<jar destfile="${jar.dir}/${jar-name-send}.jar" basedir="${classes.dir}">
 			<manifest>
 				<attribute name="Main-Class" value="${main-class-send}" />
@@ -54,6 +65,11 @@
 				<attribute name="Main-Class" value="${main-class-send-files}" />
 			</manifest>
 		</jar>
+		<jar destfile="${jar.dir}/${jar-name-send-request-reply}.jar" basedir="${classes.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="${main-class-send-request-reply}" />
+			</manifest>
+		</jar>
 	</target>
 
 	<target name="runListen" depends="jar">
@@ -62,7 +78,7 @@
 				<path refid="classpath" />
 				<path location="${jar.dir}/${jar-name-listen}.jar" />
 			</classpath>
-			<arg line="-service 7201 -network &quot;;224.1.1.1&quot; HH.TEST" />
+			<arg line="-service 7201 -network &quot;;224.1.1.1&quot; HH.TEST.>" />
 		</java>
 	</target>
 
@@ -73,6 +89,16 @@
 				<path location="${jar.dir}/${jar-name-listen-files}.jar" />
 			</classpath>
 			<arg line="-service 7201 -network &quot;;224.1.1.1&quot; -folder ${build.dir}/inbound HH.TEST.FILES" />
+		</java>
+	</target>
+	
+	<target name="runListenMultiQueue" depends="jar">
+		<java fork="true" classname="${main-class-listen-multi-queue}">
+			<classpath>
+				<path refid="classpath" />
+				<path location="${jar.dir}/${jar-name-listen-multi-queue}.jar" />
+			</classpath>
+			<arg line="-service 7201 -network &quot;;224.1.1.1&quot; -perform-dispose HH.TEST.MULTI" />
 		</java>
 	</target>
 
@@ -102,18 +128,30 @@
 				<path refid="classpath" />
 				<path location="${jar.dir}/${jar-name-send-files}.jar" />
 			</classpath>
-			<arg line="-service 7201 -network &quot;;224.1.1.1&quot; -folder ${jar.dir}/ HH.TEST.FILES" />
+			<arg line="-service 7201 -network &quot;;224.1.1.1&quot; -folder C:\Users\heiko\Downloads HH.TEST.FILES" />
+		</java>
+	</target>
+	
+	<target name="runSendRequestReply" depends="jar">
+		<java fork="true" classname="${main-class-send-request-reply}">
+			<classpath>
+				<path refid="classpath" />
+				<path location="${jar.dir}/${jar-name-send-request-reply}.jar" />
+			</classpath>
+			<arg line="-service 7201 -network &quot;;224.1.1.1&quot; -interval 0 &quot;This is a Question&quot; HH.TEST.MULTI.COMMAND" />
 		</java>
 	</target>
 
 	<target name="clean-build" depends="clean,jar" />
 
-	<target name="listen" depends="clean,runListen" />
-	<target name="listen-files" depends="clean,runListenFiles" />
-	<target name="send" depends="clean,runSend" />
-	<target name="send-ddos" depends="clean,runSendStress" />
-	<target name="send-files" depends="clean,runSendFiles" />
-
+	<target name="listen" depends="runListen" />
+	<target name="listen-files" depends="runListenFiles" />
+	<target name="listen-multi-queue" depends="runListenMultiQueue" />
+	<target name="send" depends="runSend" />
+	<target name="send-ddos" depends="runSendStress" />
+	<target name="send-files" depends="runSendFiles" />
+	<target name="send-request-reply" depends="runSendRequestReply" />
+	
 	<target name="main" depends="listen" />
 
 </project>

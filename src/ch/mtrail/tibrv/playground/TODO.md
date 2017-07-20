@@ -2,7 +2,8 @@
 * ReQuest Reply
 * FT Group
 * DQ Group
-* Multi Dispatcher example rein ziehen
+* Queue Threads native
+* Queue Threads java
 
 # Example code DONE
 * basic Async
@@ -11,6 +12,7 @@
 * Objekt Bäume
 * Certified Message
 * Angehalten Queue
+* Multi Dispatcher example rein ziehen
 
 # Vorführen
 * Basic setup

@@ -110,8 +110,7 @@ public class ListenCM implements TibrvMsgCallback {
 			// If it was not CM message or very first message
 			// we'll get seqno=0. Only confirm if seqno > 0.
 			if (seqno > 0) {
-				System.out.println("Confirming message with seqno=" + seqno);
-				System.out.flush();
+				System.out.println("\t\t\tConfirming message with seqno=" + seqno);
 
 				// Confirm the message after we didt the work, so we can fetch it again as after program crash.
 				cmListener.confirmMsg(msg);

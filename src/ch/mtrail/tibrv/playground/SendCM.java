@@ -70,7 +70,7 @@ public class SendCM implements TibrvMsgCallback {
 	public void onMsg(final TibrvListener listener, final TibrvMsg msg) {
 		try {
 			final long seqno = msg.getAsLong("seqno", 0);
-			System.out.println((new Date()).toString() + "RECEIVED seqno=" + seqno + " message=  " + msg.toString());
+			System.out.println((new Date()).toString() + " RECEIVED: seqno=" + seqno + " message=  " + msg.toString());
 			System.out.flush();
 		} catch (final TibrvException e) {
 			System.out.println(

@@ -1,9 +1,6 @@
 # Example code TODO
-* ReQuest Reply
 * FT Group
 * DQ Group
-* Queue Threads native
-* Queue Threads java
 
 # Example code DONE
 * basic Async
@@ -13,6 +10,9 @@
 * Certified Message
 * Angehalten Queue
 * Multi Dispatcher example rein ziehen
+* ReQuest Reply
+* Queue Threads native
+* Queue Threads java
 
 # Vorführen
 * Basic setup

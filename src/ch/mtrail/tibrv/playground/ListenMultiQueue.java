@@ -149,7 +149,7 @@ public class ListenMultiQueue implements TibrvMsgCallback {
 	public static void main(final String args[]) {
 		// Debug.diplayEnvInfo();
 
-		final ArgParser argParser = new ArgParser("TibRvListen");
+		final ArgParser argParser = new ArgParser("ListenMultiQueue ");
 		argParser.setOptionalParameter("service", "network", "daemon");
 		argParser.setRequiredArg("subject-prefix");
 		argParser.setFlags("perform-dispose");

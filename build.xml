@@ -16,6 +16,15 @@
 	<property name="jar-name-listen-multi-queue" value="ListenMultiQueue" />
 	<property name="main-class-listen-multi-queue" value="ch.mtrail.tibrv.playground.ListenMultiQueue" />
 
+	<property name="jar-name-listen-thread-rv" value="ListenThreadRv" />
+	<property name="main-class-listen-thread-rv" value="ch.mtrail.tibrv.playground.ListenThreadRv" />
+	
+	<property name="jar-name-listen-thread-java-a" value="ListenThreadJavaA" />
+	<property name="main-class-listen-thread-java-a" value="ch.mtrail.tibrv.playground.ListenThreadJavaA" />
+	
+	<property name="jar-name-listen-thread-java-b" value="ListenThreadJavaB" />
+	<property name="main-class-listen-thread-java-b" value="ch.mtrail.tibrv.playground.ListenThreadJavaB" />
+	
 	<property name="jar-name-send" value="Send" />
 	<property name="main-class-send" value="ch.mtrail.tibrv.playground.Send" />
 
@@ -55,6 +64,21 @@
 				<attribute name="Main-Class" value="${main-class-listen-multi-queue}" />
 			</manifest>
 		</jar>
+		<jar destfile="${jar.dir}/${jar-name-listen-thread-rv}.jar" basedir="${classes.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="${main-class-listen-thread-rv}" />
+			</manifest>
+		</jar>
+		<jar destfile="${jar.dir}/${jar-name-listen-thread-java-a}.jar" basedir="${classes.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="${main-class-listen-thread-java-a}" />
+			</manifest>
+		</jar>
+		<jar destfile="${jar.dir}/${jar-name-listen-thread-java-b}.jar" basedir="${classes.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="${main-class-listen-thread-java-b}" />
+			</manifest>
+		</jar>
 		<jar destfile="${jar.dir}/${jar-name-send}.jar" basedir="${classes.dir}">
 			<manifest>
 				<attribute name="Main-Class" value="${main-class-send}" />
@@ -92,6 +116,36 @@
 		</java>
 	</target>
 	
+	<target name="runListenThreadRv" depends="jar">
+		<java fork="true" classname="${main-class-listen-thread-rv}">
+			<classpath>
+				<path refid="classpath" />
+				<path location="${jar.dir}/${jar-name-listen-thread-rv}.jar" />
+			</classpath>
+			<arg line="-service 7201 -network &quot;;224.1.1.1&quot; -threads 3 HH.TEST.>" />
+		</java>
+	</target>
+	
+	<target name="runListenThreadJavaA" depends="jar">
+		<java fork="true" classname="${main-class-listen-thread-java-a}">
+			<classpath>
+				<path refid="classpath" />
+				<path location="${jar.dir}/${jar-name-listen-thread-java-a}.jar" />
+			</classpath>
+			<arg line="-service 7201 -network &quot;;224.1.1.1&quot; -threads 3 HH.TEST.>" />
+		</java>
+	</target>
+	
+	<target name="runListenThreadJavaB" depends="jar">
+		<java fork="true" classname="${main-class-listen-thread-java-b}">
+			<classpath>
+				<path refid="classpath" />
+				<path location="${jar.dir}/${jar-name-listen-thread-java-b}.jar" />
+			</classpath>
+			<arg line="-service 7201 -network &quot;;224.1.1.1&quot; -threads 3 HH.TEST.>" />
+		</java>
+	</target>
+			
 	<target name="runListenMultiQueue" depends="jar">
 		<java fork="true" classname="${main-class-listen-multi-queue}">
 			<classpath>
@@ -147,11 +201,14 @@
 	<target name="listen" depends="runListen" />
 	<target name="listen-files" depends="runListenFiles" />
 	<target name="listen-multi-queue" depends="runListenMultiQueue" />
+	<target name="listen-threads-rv" depends="runListenThreadRv" />
+	<target name="listen-threads-java-a" depends="runListenThreadJavaA" />
+	<target name="listen-threads-java-b" depends="runListenThreadJavaB" />
+	
 	<target name="send" depends="runSend" />
 	<target name="send-ddos" depends="runSendStress" />
 	<target name="send-files" depends="runSendFiles" />
 	<target name="send-request-reply" depends="runSendRequestReply" />
 	
 	<target name="main" depends="listen" />
-
 </project>

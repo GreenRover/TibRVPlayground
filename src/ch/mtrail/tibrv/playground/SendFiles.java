@@ -99,9 +99,7 @@ public class SendFiles {
 	}
 
 	public static void main(final String args[]) {
-		// Debug.diplayEnvInfo();
-
-		final ArgParser argParser = new ArgParser("TibRvListen");
+		final ArgParser argParser = new ArgParser("SendFiles");
 		argParser.setOptionalParameter("service", "network", "daemon");
 		argParser.setRequiredParameter("folder");
 		argParser.setRequiredArg("subject");

@@ -75,7 +75,7 @@ public class SendRequestReply {
 	public static void main(final String args[]) {
 		// Debug.diplayEnvInfo();
 
-		final ArgParser argParser = new ArgParser("TibRvListen");
+		final ArgParser argParser = new ArgParser("SendRequestReply");
 		// Interval milli seconds to repeat message
 		argParser.setOptionalParameter("service", "network", "daemon", "interval");
 		argParser.setRequiredArg("msg", "subject");

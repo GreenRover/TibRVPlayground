@@ -32,7 +32,7 @@ public class Send {
 		final TibrvException e) {
 			System.err.println("Failed to open Tibrv in native implementation:");
 			e.printStackTrace();
-			System.exit(0);
+			System.exit(1);
 		}
 
 		// Create RVD transport
@@ -41,7 +41,7 @@ public class Send {
 		} catch (final TibrvException e) {
 			System.err.println("Failed to create TibrvRvdTransport:");
 			e.printStackTrace();
-			System.exit(0);
+			System.exit(1);
 		}
 	}
 
@@ -56,7 +56,7 @@ public class Send {
 			} catch (final TibrvException e) {
 				System.err.println("Failed to set send subject:");
 				e.printStackTrace();
-				System.exit(0);
+				System.exit(1);
 			}
 
 			msg.add(FIELD_NAME, msgString);

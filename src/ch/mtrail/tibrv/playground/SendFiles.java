@@ -36,7 +36,7 @@ public class SendFiles {
 		final TibrvException | UnsupportedEncodingException e) {
 			System.err.println("Failed to open Tibrv in native implementation:");
 			e.printStackTrace();
-			System.exit(0);
+			System.exit(1);
 		}
 
 		// Create RVD transport
@@ -45,7 +45,7 @@ public class SendFiles {
 		} catch (final TibrvException e) {
 			System.err.println("Failed to create TibrvRvdTransport:");
 			e.printStackTrace();
-			System.exit(0);
+			System.exit(1);
 		}
 		
 		// Create error listener
@@ -56,7 +56,7 @@ public class SendFiles {
 		} catch (final TibrvException e) {
 			System.err.println("Failed to create ErrorHandler:");
 			e.printStackTrace();
-			System.exit(0);
+			System.exit(1);
 		}
 	}
 
@@ -70,7 +70,7 @@ public class SendFiles {
 		} catch (final TibrvException e) {
 			System.err.println("Failed to set send subject:");
 			e.printStackTrace();
-			System.exit(0);
+			System.exit(1);
 		}
 
 		final byte[] content = Files.readAllBytes(file);

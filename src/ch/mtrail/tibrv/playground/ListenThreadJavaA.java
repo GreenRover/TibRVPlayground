@@ -28,7 +28,7 @@ public class ListenThreadJavaA implements TibrvMsgCallback {
 		final TibrvException e) {
 			System.err.println("Failed to open Tibrv in native implementation:");
 			e.printStackTrace();
-			System.exit(0);
+			System.exit(1);
 		}
 
 		// Create RVD transport
@@ -38,7 +38,7 @@ public class ListenThreadJavaA implements TibrvMsgCallback {
 		} catch (final TibrvException e) {
 			System.err.println("Failed to create TibrvRvdTransport:");
 			e.printStackTrace();
-			System.exit(0);
+			System.exit(1);
 		}
 
 		try {
@@ -56,7 +56,7 @@ public class ListenThreadJavaA implements TibrvMsgCallback {
 		} catch (final TibrvException e) {
 			System.err.println("Failed to create listener:");
 			e.printStackTrace();
-			System.exit(0);
+			System.exit(1);
 		}
 	}
 

@@ -25,6 +25,9 @@
 	<property name="jar-name-listen-thread-java-b" value="ListenThreadJavaB" />
 	<property name="main-class-listen-thread-java-b" value="ch.mtrail.tibrv.playground.ListenThreadJavaB" />
 	
+	<property name="jar-name-listen-cm" value="ListenCM" />
+	<property name="main-class-listen-cm" value="ch.mtrail.tibrv.playground.ListenCM" />
+	
 	<property name="jar-name-send" value="Send" />
 	<property name="main-class-send" value="ch.mtrail.tibrv.playground.Send" />
 
@@ -33,6 +36,9 @@
 
 	<property name="jar-name-send-request-reply" value="SendRequestReply" />
 	<property name="main-class-send-request-reply" value="ch.mtrail.tibrv.playground.SendRequestReply" />
+	
+	<property name="jar-name-send-cm" value="SendCM" />
+	<property name="main-class-send-cm" value="ch.mtrail.tibrv.playground.SendCM" />
 
 	<path id="classpath">
 		<fileset dir="${lib.dir}" includes="**/*.jar" />
@@ -79,6 +85,11 @@
 				<attribute name="Main-Class" value="${main-class-listen-thread-java-b}" />
 			</manifest>
 		</jar>
+		<jar destfile="${jar.dir}/${jar-name-listen-cm}.jar" basedir="${classes.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="${main-class-listen-cm}" />
+			</manifest>
+		</jar>
 		<jar destfile="${jar.dir}/${jar-name-send}.jar" basedir="${classes.dir}">
 			<manifest>
 				<attribute name="Main-Class" value="${main-class-send}" />
@@ -92,6 +103,11 @@
 		<jar destfile="${jar.dir}/${jar-name-send-request-reply}.jar" basedir="${classes.dir}">
 			<manifest>
 				<attribute name="Main-Class" value="${main-class-send-request-reply}" />
+			</manifest>
+		</jar>
+		<jar destfile="${jar.dir}/${jar-name-send-cm}.jar" basedir="${classes.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="${main-class-send-cm}" />
 			</manifest>
 		</jar>
 	</target>
@@ -155,6 +171,16 @@
 			<arg line="-service 7201 -network &quot;;224.1.1.1&quot; -perform-dispose HH.TEST.MULTI" />
 		</java>
 	</target>
+	
+	<target name="runListenCM" depends="jar">
+		<java fork="true" classname="${main-class-listen-cm}">
+			<classpath>
+				<path refid="classpath" />
+				<path location="${jar.dir}/${jar-name-listen-cm}.jar" />
+			</classpath>
+			<arg line="-service 7201 -network &quot;;224.1.1.1&quot; HH.TEST.CM" />
+		</java>
+	</target>
 
 	<target name="runSend" depends="jar">
 		<java fork="true" classname="${main-class-send}">
@@ -195,6 +221,16 @@
 			<arg line="-service 7201 -network &quot;;224.1.1.1&quot; -interval 0 &quot;This is a Question&quot; HH.TEST.MULTI.COMMAND" />
 		</java>
 	</target>
+	
+	<target name="runSendCM" depends="jar">
+		<java fork="true" classname="${main-class-send-cm}">
+			<classpath>
+				<path refid="classpath" />
+				<path location="${jar.dir}/${jar-name-send-cm}.jar" />
+			</classpath>
+			<arg line="-service 7201 -network &quot;;224.1.1.1&quot; -interval 500 &quot;Hallo du schöne Welt&quot; HH.TEST.CM" />
+		</java>
+	</target>
 
 	<target name="clean-build" depends="clean,jar" />
 
@@ -204,11 +240,13 @@
 	<target name="listen-threads-rv" depends="runListenThreadRv" />
 	<target name="listen-threads-java-a" depends="runListenThreadJavaA" />
 	<target name="listen-threads-java-b" depends="runListenThreadJavaB" />
+	<target name="listen-cm" depends="runListenCM" />
 	
 	<target name="send" depends="runSend" />
 	<target name="send-ddos" depends="runSendStress" />
 	<target name="send-files" depends="runSendFiles" />
 	<target name="send-request-reply" depends="runSendRequestReply" />
+	<target name="send-cm" depends="runSendCM" />
 	
 	<target name="main" depends="listen" />
 </project>

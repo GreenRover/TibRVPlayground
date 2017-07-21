@@ -3,26 +3,34 @@ package ch.mtrail.tibrv.playground;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Date;
 
 import com.tibco.tibrv.Tibrv;
+import com.tibco.tibrv.TibrvCmListener;
+import com.tibco.tibrv.TibrvCmMsg;
+import com.tibco.tibrv.TibrvCmTransport;
 import com.tibco.tibrv.TibrvException;
 import com.tibco.tibrv.TibrvListener;
 import com.tibco.tibrv.TibrvMsg;
 import com.tibco.tibrv.TibrvMsgCallback;
-import com.tibco.tibrv.TibrvQueue;
-import com.tibco.tibrv.TibrvQueueGroup;
 import com.tibco.tibrv.TibrvRvdTransport;
-import com.tibco.tibrv.TibrvTransport;
 
-public class ListenMultiQueue implements TibrvMsgCallback {
+public class ListenCM implements TibrvMsgCallback {
 
-	private boolean performDispose = false;
 	private boolean performDispatch = true;
-	private TibrvQueueGroup group;
 
-	public ListenMultiQueue(final String service, final String network, final String daemon,
-			final String subjectPrefix) {
+	private String cmname = "MyProgrammAndTheTaskItDoesIdentification__ListenCM";
+	private TibrvCmListener cmListener = null;
+
+	public ListenCM(final String service, final String network, final String daemon, final String subject) {
+		try {
+			cmname = "MyProgrammAndTheTaskItDoesIdentification__ListenCM_" + InetAddress.getLocalHost().getHostName();
+		} catch (UnknownHostException e1) {
+			e1.printStackTrace();
+			System.exit(1);
+		}
 
 		// open Tibrv in native implementation
 		try {
@@ -36,9 +44,11 @@ public class ListenMultiQueue implements TibrvMsgCallback {
 		}
 
 		// Create RVD transport
-		TibrvTransport transport = null;
+		TibrvRvdTransport transport = null;
+		TibrvCmTransport cmTransport = null;
 		try {
 			transport = new TibrvRvdTransport(service, network, daemon);
+			cmTransport = new TibrvCmTransport(transport, cmname, true);
 		} catch (final TibrvException e) {
 			System.err.println("Failed to create TibrvRvdTransport:");
 			e.printStackTrace();
@@ -46,31 +56,11 @@ public class ListenMultiQueue implements TibrvMsgCallback {
 		}
 
 		try {
-			// create two queues
-			TibrvQueue queue1 = new TibrvQueue();
-			TibrvQueue queue2 = new TibrvQueue();
+			cmListener = new TibrvCmListener(Tibrv.defaultQueue(), this, cmTransport, subject, null);
+			System.err.println("Listening on: " + subject);
 
-			// set priorities
-			queue1.setPriority(1);
-			queue2.setPriority(2);
-
-			final int limitPolicy = TibrvQueue.DISCARD_FIRST;
-			final int maxEvents = 1000;
-			final int discardAmount = 25;
-			queue2.setLimitPolicy(limitPolicy, maxEvents, discardAmount);
-
-			group = new TibrvQueueGroup();
-			group.add(queue1);
-			group.add(queue2);
-
-			// Create listeners
-			new TibrvListener(queue1, this, transport, subjectPrefix + ".COMMAND.>", null);
-			new TibrvListener(queue2, this, transport, subjectPrefix + ".VIDEO_STREAM.>", null);
-
-			// Create error listener
-			final ErrorLogger errorLogger = new ErrorLogger();
-			new TibrvListener(queue2, errorLogger, transport, "_RV.ERROR.>", null);
-			new TibrvListener(queue2, errorLogger, transport, "_RV.WARN.>", null);
+			// Set explicit confirmation
+			cmListener.setExplicitConfirm();
 		} catch (final TibrvException e) {
 			System.err.println("Failed to create listener:");
 			e.printStackTrace();
@@ -84,7 +74,7 @@ public class ListenMultiQueue implements TibrvMsgCallback {
 				// dispatch Tibrv events
 				try {
 					// Wait max 1 sec, to listen on keyboard.
-					group.timedDispatch(1);
+					Tibrv.defaultQueue().timedDispatch(1);
 				} catch (final TibrvException e) {
 					System.err.println("Exception dispatching default queue:");
 					e.printStackTrace();
@@ -97,7 +87,7 @@ public class ListenMultiQueue implements TibrvMsgCallback {
 				// Dispatch is disabled, just idle
 				try {
 					Thread.sleep(500);
-				} catch (InterruptedException e) {
+				} catch (final InterruptedException e) {
 					e.printStackTrace();
 				}
 			}
@@ -106,66 +96,54 @@ public class ListenMultiQueue implements TibrvMsgCallback {
 
 	@Override
 	public void onMsg(final TibrvListener listener, final TibrvMsg msg) {
-		System.out.println((new Date()).toString() + ": subject=" + msg.getSendSubject() + ", reply="
-				+ msg.getReplySubject() + ", message=" + msg.toString());
-		System.out.flush();
+		try {
+			System.out.println((new Date()).toString() + ": subject=" + msg.getSendSubject() + ", reply="
+					+ msg.getReplySubject() + ", message=" + msg.toString());
+			System.out.flush();
 
-		if (msg.getReplySubject() != null) {
-			// Send reply msg if a request subject is set.
-			try {
-				Thread.sleep(500);
+			// Report we are confirming message
+			final long seqno = TibrvCmMsg.getSequence(msg);
 
-				final TibrvMsg replyMsg = new TibrvMsg();
-				replyMsg.add("TYPE", "ANSWER");
-				replyMsg.add("ORG_MSG", msg.toString());
+			// do some work.
+			Thread.sleep(500);
 
-				listener.getTransport().sendReply(replyMsg, msg);
-			} catch (TibrvException | InterruptedException e) {
-				System.err.println("Failed to reply to msg:");
-				e.printStackTrace();
+			// If it was not CM message or very first message
+			// we'll get seqno=0. Only confirm if seqno > 0.
+			if (seqno > 0) {
+				System.out.println("Confirming message with seqno=" + seqno);
+				System.out.flush();
+
+				// Confirm the message after we didt the work, so we can fetch it again as after program crash.
+				cmListener.confirmMsg(msg);
 			}
-		}
-		if (performDispose) {
+
 			msg.dispose();
+		} catch (TibrvException | InterruptedException e) {
+			e.printStackTrace();
 		}
-	}
-
-	public void setPerformDispose() {
-		setPerformDispose(true);
-	}
-
-	public void setPerformDispose(final boolean performDispose) {
-		this.performDispose = performDispose;
 	}
 
 	public boolean isPerformDispatch() {
 		return performDispatch;
 	}
 
-	public void setPerformDispatch(boolean performDispatch) {
+	public void setPerformDispatch(final boolean performDispatch) {
 		this.performDispatch = performDispatch;
 	}
 
 	public static void main(final String args[]) {
 		// Debug.diplayEnvInfo();
 
-		final ArgParser argParser = new ArgParser("ListenMultiQueue ");
+		final ArgParser argParser = new ArgParser("TibRvListenCM");
 		argParser.setOptionalParameter("service", "network", "daemon");
-		argParser.setRequiredArg("subject-prefix");
-		argParser.setFlags("perform-dispose");
+		argParser.setRequiredArg("subject");
 		argParser.parse(args);
 
-		final String subjectPrefix = argParser.getArgument("subject-prefix");
-
-		final ListenMultiQueue listen = new ListenMultiQueue(//
+		final ListenCM listen = new ListenCM(//
 				argParser.getParameter("service"), //
 				argParser.getParameter("network"), //
 				argParser.getParameter("daemon"), //
-				subjectPrefix);
-
-		if (argParser.isFlagSet("perform-dispose")) {
-			listen.setPerformDispose();
-		}
+				argParser.getArgument("subject"));
 
 		listen.startKeyListener();
 
@@ -178,7 +156,7 @@ public class ListenMultiQueue implements TibrvMsgCallback {
 		new Thread(() -> {
 			try (BufferedReader input = new BufferedReader(new InputStreamReader(System.in, "UTF-8"))) {
 				while (true) {
-					char c = (char) input.read();
+					final char c = (char) input.read();
 
 					switch (c) {
 					case 'd':
@@ -203,7 +181,7 @@ public class ListenMultiQueue implements TibrvMsgCallback {
 					}
 
 				}
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				e.printStackTrace();
 			}
 		}).start();

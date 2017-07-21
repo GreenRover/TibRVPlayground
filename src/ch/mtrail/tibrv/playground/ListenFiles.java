@@ -35,7 +35,7 @@ public class ListenFiles implements TibrvMsgCallback {
 		final TibrvException e) {
 			System.err.println("Failed to open Tibrv in native implementation:");
 			e.printStackTrace();
-			System.exit(0);
+			System.exit(1);
 		}
 
 		// Create RVD transport
@@ -45,7 +45,7 @@ public class ListenFiles implements TibrvMsgCallback {
 		} catch (final TibrvException e) {
 			System.err.println("Failed to create TibrvRvdTransport:");
 			e.printStackTrace();
-			System.exit(0);
+			System.exit(1);
 		}
 
 		// create listener using default queue
@@ -55,7 +55,7 @@ public class ListenFiles implements TibrvMsgCallback {
 		} catch (final TibrvException e) {
 			System.err.println("Failed to create listener:");
 			e.printStackTrace();
-			System.exit(0);
+			System.exit(1);
 		}
 	}
 	
@@ -67,9 +67,9 @@ public class ListenFiles implements TibrvMsgCallback {
 			} catch (final TibrvException e) {
 				System.err.println("Exception dispatching default queue:");
 				e.printStackTrace();
-				System.exit(0);
+				System.exit(1);
 			} catch (final InterruptedException ie) {
-				System.exit(0);
+				System.exit(1);
 			}
 		}
 	}

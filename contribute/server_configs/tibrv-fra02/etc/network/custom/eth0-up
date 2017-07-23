@@ -1,0 +1,19 @@
+
+# eth0 post-up dependencies
+
+IPCMD="/sbin/ip"
+IPTABLES="/sbin/iptables"
+
+# GRE tunnel to Site-lon02
+GREINT="gre-fra"
+$IPCMD tunnel add $GREINT mode gre remote 207.154.214.50 local 207.154.212.236 ttl 255
+$IPCMD link set $GREINT up
+$IPCMD link set $GREINT multicast on
+$IPCMD addr add 192.168.80.1/30 broadcast 192.168.80.3 dev $GREINT
+
+# Make sure the right MTU is used through the tunnel
+$IPTABLES -t mangle -A POSTROUTING -p tcp --tcp-flags SYN,RST SYN -o $GREINT -j TCPMSS --clamp-mss-to-pmtu
+
+# Add a route for multicast
+$IPCMD route add 224.0.0.0/4 dev $GREINT
+

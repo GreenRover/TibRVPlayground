@@ -1,0 +1,16 @@
+[Unit]
+Description=Tibco Rendevouz Routing Daemon
+After=network.target
+
+[Service]
+Environment="PATH=/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/opt/tibco/tibrv/8.4/bin/"
+ExecStart=/bin/bash -c "/opt/tibco/tibrv/8.4/bin/rvrd -http 1080 -http-only -store /var/lib/rvrd.db"
+ExecStop=/usr/bin/pkill rvrd
+KillMode=process
+Restart=on-failure
+Type=forking
+User=root
+
+[Install]
+WantedBy=multi-user.target
+Alias=rvrd.service

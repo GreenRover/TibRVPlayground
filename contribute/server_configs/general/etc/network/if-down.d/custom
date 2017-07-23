@@ -1,0 +1,7 @@
+#!/bin/sh
+
+SCRIPT="/etc/network/custom/$IFACE-down"
+if [ -x $SCRIPT ]; then
+	`$SCRIPT`
+fi
+

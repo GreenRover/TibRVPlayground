@@ -1,0 +1,14 @@
+# eth0 pre-down dependencies
+
+IPCMD="/sbin/ip"
+IPTABLES="/sbin/iptables"
+
+GREINT="gre-fra"
+
+# Clean up iptables MTU correction for GRE tunnel
+$IPTABLES -t mangle -D POSTROUTING -p tcp --tcp-flags SYN,RST SYN -o $GREINT -j TCPMSS --clamp-mss-to-pmtu
+
+# Take down GRE tunnel
+$IPCMD link set $GREINT down
+$IPCMD tunnel del $GREINT
+

@@ -9,6 +9,7 @@ import com.tibco.tibrv.TibrvListener;
 import com.tibco.tibrv.TibrvMsg;
 import com.tibco.tibrv.TibrvMsgCallback;
 import com.tibco.tibrv.TibrvQueue;
+import com.tibco.tibrv.TibrvQueueGroup;
 import com.tibco.tibrv.TibrvRvdTransport;
 import com.tibco.tibrv.TibrvTransport;
 
@@ -39,19 +40,24 @@ public class ListenThreadRv implements TibrvMsgCallback {
 		}
 
 		try {
-			for (int i = 0; i <= threads; i++) {
-				final TibrvQueue queue = new TibrvQueue();
-				new TibrvListener(queue, this, transport, subject, null);
-				new TibrvDispatcher("InboundProcessor-" + i, queue);
-			}
-			System.out.println("Created " + threads + " threads on " + subject);
+			final TibrvQueueGroup group = new TibrvQueueGroup();
+			
+			// Create main listener.
+			final TibrvQueue queue = new TibrvQueue();
+			new TibrvListener(queue, this, transport, subject, null);
+			group.add(queue);
 
 			// Create error listener
 			final TibrvQueue errorQueue = new TibrvQueue();
 			final ErrorLogger errorLogger = new ErrorLogger();
 			new TibrvListener(errorQueue, errorLogger, transport, "_RV.ERROR.>", null);
 			new TibrvListener(errorQueue, errorLogger, transport, "_RV.WARN.>", null);
-			new TibrvDispatcher("ErrorQueue", errorQueue);
+			group.add(errorQueue);
+
+			for (int i = 0; i <= threads; i++) {
+				new TibrvDispatcher("Dispatcher-" + i, group);
+			}
+			System.out.println("Created " + threads + " threads on " + subject);
 		} catch (final TibrvException e) {
 			System.err.println("Failed to create listener:");
 			e.printStackTrace();

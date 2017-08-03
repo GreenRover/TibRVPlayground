@@ -27,13 +27,12 @@ public class SendCM implements TibrvMsgCallback {
 	// Confirmation advisory subject
 	private static final String confirmAdvisorySubject = "_RV.INFO.RVCM.DELIVERY.CONFIRM.>";
 	private int msgSend = 0;
-	private TibrvDispatcher tibrvDispatcher;
 
 	public SendCM(final String service, final String network, final String daemon, final String subject) {
 		
 		try {
 			cmname = "MyProgrammAndTheTaskItDoesIdentification__SendCM_" + InetAddress.getLocalHost().getHostName();
-		} catch (UnknownHostException e1) {
+		} catch (final UnknownHostException e1) {
 			e1.printStackTrace();
 			System.exit(1);
 		}
@@ -58,7 +57,7 @@ public class SendCM implements TibrvMsgCallback {
 
 			// Create listener for delivery confirmation advisory messages
 			new TibrvListener(Tibrv.defaultQueue(), this, transport, confirmAdvisorySubject, null);
-			tibrvDispatcher = new TibrvDispatcher(Tibrv.defaultQueue());
+			new TibrvDispatcher(Tibrv.defaultQueue());
 
 		} catch (final TibrvException e) {
 			System.err.println("Failed to create TibrvRvdTransport:");
@@ -112,7 +111,7 @@ public class SendCM implements TibrvMsgCallback {
 	public void stopDispatcher() {
 		try {
 			Tibrv.close();
-		} catch (TibrvException e) {
+		} catch (final TibrvException e) {
 			e.printStackTrace();
 		}
 	}

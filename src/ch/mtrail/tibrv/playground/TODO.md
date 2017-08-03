@@ -1,5 +1,4 @@
 # Example code TODO
-* FT Group
 * DQ Group
 
 # Example code DONE
@@ -14,8 +13,9 @@
 * Queue Threads native
 * Queue Threads java
 * Config sichern
+* FT Group
 
-# Vorf�hren
+# Vorführen
 - Einsatzszenarien
 - Tibco != Rendevouz
 - Fragen
@@ -23,10 +23,10 @@
 * Basic setup
 - TibRV Tools
 * tibrvlisten / tibrvsend
-- Wie wird es �bertragen
+- Wie wird es übertragen
 - Tools IP
 * Tools ausprobieren (was wenn es mal nicht geht)
-- Was wird �bertragen
+- Was wird übertragen
 * Send / Listen
 * SendFiles / ListenFiles
 * FilTimeEncoder -> TibrvDate Vergleich mit Wireshark
@@ -46,5 +46,5 @@
 * global Wildcard
 - Topoogie RCS
 - Fragen Beantworten
+** Erläätern das rvrd alles weiterleitet und ide Filter nur im und export sind
 
-46 -> 33

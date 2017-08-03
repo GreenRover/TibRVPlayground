@@ -55,7 +55,7 @@ public class ArgParser {
 		while (i < args.length) {
 			if (args[i].startsWith("-")) {
 				// Get parameter.
-				String paramName = args[i].substring(1);
+				final String paramName = args[i].substring(1);
 				if (flags.contains(paramName)) {
 					extractedFlags.add(paramName);
 					i++;
@@ -76,7 +76,7 @@ public class ArgParser {
 	}
 
 	private void validateParameters() {
-		for (String paramName : requiredParameters) {
+		for (final String paramName : requiredParameters) {
 			if (!extractedParameter.containsKey(paramName)) {
 				System.err.println("Missing parameter: -" + paramName + " " + paramName);
 				printUsage();
@@ -86,7 +86,7 @@ public class ArgParser {
 
 	private void validateArguments() {
 		if (requiredArgs.size() > extractedArguments.size()) {
-			int missingIndex = requiredArgs.size() - extractedArguments.size() - 1;
+			final int missingIndex = requiredArgs.size() - extractedArguments.size() - 1;
 			System.err.println("Missing argument: <" + requiredArgs.get(missingIndex) + ">");
 			printUsage();
 		}
@@ -94,30 +94,30 @@ public class ArgParser {
 	}
 
 	private void printUsage() {
-		StringBuilder usageMsg = new StringBuilder();
+		final StringBuilder usageMsg = new StringBuilder();
 		usageMsg.append("Usage: java " + programmName);
 
-		for (String param : requiredParameters) {
+		for (final String param : requiredParameters) {
 			printToErrIfLineToLong(usageMsg);
 			usageMsg.append(" -" + param + " " + param);
 		}
 
-		for (String param : optionalParameters) {
+		for (final String param : optionalParameters) {
 			printToErrIfLineToLong(usageMsg);
 			usageMsg.append(" [-" + param + " " + param + "]");
 		}
 
-		for (String flag : flags) {
+		for (final String flag : flags) {
 		        printToErrIfLineToLong(usageMsg);
 			usageMsg.append(" [-" + flag + "]");
 		}
 
-		for (String arg : requiredArgs) {
+		for (final String arg : requiredArgs) {
 			printToErrIfLineToLong(usageMsg);
 			usageMsg.append(" <" + arg + ">");
 		}
 
-		for (String arg : optionalArgs) {
+		for (final String arg : optionalArgs) {
 			printToErrIfLineToLong(usageMsg);
 			usageMsg.append(" [" + arg + "]");
 		}
@@ -129,7 +129,7 @@ public class ArgParser {
 		System.exit(-1);
 	}
 
-	private void printToErrIfLineToLong(StringBuilder output) {
+	private void printToErrIfLineToLong(final StringBuilder output) {
 		if (output.length() > 65) {
 			System.err.println(output.toString());
 			output.setLength(0);
@@ -147,17 +147,16 @@ public class ArgParser {
 			return extractedArguments.get(indexRequired);
 		}
 
-		final int indexOptional = optionalArgs.indexOf(argName);
+		final int indexOptional = requiredArgs.size() + optionalArgs.indexOf(argName);
 		if (indexOptional >= 0) {
 			try {
 				return extractedArguments.get(indexOptional);
-			} catch (IndexOutOfBoundsException e) {
+			} catch (final IndexOutOfBoundsException e) {
 				return null;
 			}
 		}
 
 		throw new InvalidParameterException("Argument " + argName + " was not set as required or optional.");
-
 	}
 
 	/**

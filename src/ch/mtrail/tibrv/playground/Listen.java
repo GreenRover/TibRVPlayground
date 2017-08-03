@@ -44,7 +44,7 @@ public class Listen implements TibrvMsgCallback {
 			System.exit(1);
 		}
 
-		for (String subject : subjects) {
+		for (final String subject : subjects) {
 			// create listener using default queue
 			try {
 				new TibrvListener(Tibrv.defaultQueue(), this, transport, subject, null);
@@ -62,8 +62,8 @@ public class Listen implements TibrvMsgCallback {
 			if (performDispatch) {
 				// dispatch Tibrv events
 				try {
-					// Wait max 1 sec, to listen on keyboard.
-					Tibrv.defaultQueue().timedDispatch(1);
+					// Wait max 0,5 sec, to listen on keyboard.
+					Tibrv.defaultQueue().timedDispatch(0.5d);
 				} catch (final TibrvException e) {
 					System.err.println("Exception dispatching default queue:");
 					e.printStackTrace();
@@ -76,7 +76,7 @@ public class Listen implements TibrvMsgCallback {
 				// Dispatch is disabled, just idle
 				try {
 					Thread.sleep(500);
-				} catch (InterruptedException e) {
+				} catch (final InterruptedException e) {
 					e.printStackTrace();
 				}
 			}
@@ -106,7 +106,7 @@ public class Listen implements TibrvMsgCallback {
 		return performDispatch;
 	}
 
-	public void setPerformDispatch(boolean performDispatch) {
+	public void setPerformDispatch(final boolean performDispatch) {
 		this.performDispatch = performDispatch;
 	}
 
@@ -125,12 +125,12 @@ public class Listen implements TibrvMsgCallback {
 			subjects.add(argParser.getArgument("subject"));
 
 			for (int i = 1; i <= 3; i++) {
-				String addSubject = argParser.getArgument("addtional-subject" + i);
+				final String addSubject = argParser.getArgument("addtional-subject" + i);
 				if (Objects.nonNull(addSubject)) {
 					subjects.add(addSubject);
 				}
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 			System.exit(-1);
 		}
@@ -156,7 +156,7 @@ public class Listen implements TibrvMsgCallback {
 		new Thread(() -> {
 			try (BufferedReader input = new BufferedReader(new InputStreamReader(System.in, "UTF-8"))) {
 				while (true) {
-					char c = (char) input.read();
+					final char c = (char) input.read();
 
 					switch (c) {
 					case 'd':
@@ -181,7 +181,7 @@ public class Listen implements TibrvMsgCallback {
 					}
 
 				}
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				e.printStackTrace();
 			}
 		}).start();

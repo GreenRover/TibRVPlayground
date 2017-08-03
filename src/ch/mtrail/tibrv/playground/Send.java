@@ -1,9 +1,10 @@
 package ch.mtrail.tibrv.playground;
 
 import java.text.NumberFormat;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.tibco.tibrv.Tibrv;
@@ -15,12 +16,12 @@ import com.tibco.tibrv.TibrvTransport;
 public class Send {
 
 	private TibrvTransport transport = null;
-	private final List<String> subjects;
+	private final Set<String> subjects;
 	private final String FIELD_NAME = "DATA";
 	private final String FIELD_INDEX = "INDEX";
 	private int msgSend = 0;
 
-	public Send(final String service, final String network, final String daemon, final List<String> subjects) {
+	public Send(final String service, final String network, final String daemon, final Set<String> subjects) {
 
 		this.subjects = subjects;
 
@@ -64,8 +65,8 @@ public class Send {
 			transport.send(msg);
 			msg.dispose();
 
-			msgSend++;
 		}
+		msgSend++;
 	}
 
 	public void printStatus() {
@@ -83,13 +84,13 @@ public class Send {
 		argParser.setOptionalArg("addtional-subject1", "addtional-subject2", "addtional-subject3");
 		argParser.parse(args);
 
-		final List<String> subjects = new ArrayList<>();
+		final Set<String> subjects = new HashSet<>();
 		try {
 			subjects.add(argParser.getArgument("subject"));
 
 			for (int i = 1; i <= 3; i++) {
 				final String addSubject = argParser.getArgument("addtional-subject" + i);
-				if (Objects.nonNull(addSubject)) {
+				if (Objects.nonNull(addSubject) && !addSubject.isEmpty()) {
 					subjects.add(addSubject);
 				}
 			}

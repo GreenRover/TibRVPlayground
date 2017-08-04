@@ -6,6 +6,8 @@ import java.io.InputStreamReader;
 import java.util.Date;
 
 import com.tibco.tibrv.Tibrv;
+import com.tibco.tibrv.TibrvCmListener;
+import com.tibco.tibrv.TibrvCmMsg;
 import com.tibco.tibrv.TibrvCmQueueTransport;
 import com.tibco.tibrv.TibrvException;
 import com.tibco.tibrv.TibrvListener;
@@ -49,9 +51,9 @@ public class ListenDQ implements TibrvMsgCallback {
 			queue = new TibrvQueue();
 
 			dq = new TibrvCmQueueTransport(transport, dqGroupName);
-			// dq.setWorkerTasks(2);
+			dq.setWorkerTasks(2);
 
-			new TibrvListener(queue, this, dq, subject, null);
+			new TibrvCmListener(queue, this, dq, subject, null);
 			System.err.println("Listening on: " + subject);
 
 		} catch (final TibrvException e) {
@@ -89,11 +91,24 @@ public class ListenDQ implements TibrvMsgCallback {
 
 	@Override
 	public void onMsg(final TibrvListener listener, final TibrvMsg msg) {
+		long seqno = -1;
+		try {
+			seqno = TibrvCmMsg.getSequence(msg);
+		} catch (TibrvException e) {
+			e.printStackTrace();
+		}
+		 
 		System.out.println((new Date()).toString() + " " //
-				+ "subject=" + msg.getSendSubject() + ", message=" + msg.toString());
+				+ "subject=" + msg.getSendSubject() + ", message=" + msg.toString() + ", seqno=" + seqno);
 		System.out.flush();
 
 		msg.dispose();
+		
+		try {
+			Thread.sleep(201);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public boolean isPerformDispatch() {

@@ -120,8 +120,7 @@ public class ListenFT implements TibrvMsgCallback {
 	@Override
 	public void onMsg(final TibrvListener listener, final TibrvMsg msg) {
 		System.out.println((new Date()).toString() + " " + getFtStatus(ftStatus) + "(" + ftMember.getWeight() + "): " //
-				+ "subject=" + msg.getSendSubject() + ", reply=" + msg.getReplySubject() //
-				+ ", message=" + msg.toString());
+				+ "subject=" + msg.getSendSubject() + ", message=" + msg.toString());
 		System.out.flush();
 
 		msg.dispose();

@@ -42,18 +42,18 @@ public class ListenDQ implements TibrvMsgCallback {
 			e.printStackTrace();
 			System.exit(1);
 		}
-		
+
 		// DistributedQueue + listener using default queue
 		TibrvCmQueueTransport dq;
 		try {
 			queue = new TibrvQueue();
-            
+
 			dq = new TibrvCmQueueTransport(transport, dqGroupName);
-			//dq.setWorkerTasks(2);
+			// dq.setWorkerTasks(2);
 
 			new TibrvListener(queue, this, dq, subject, null);
 			System.err.println("Listening on: " + subject);
-			
+
 		} catch (final TibrvException e) {
 			System.err.println("Error setup distributed queue or listener");
 			e.printStackTrace();
@@ -90,8 +90,7 @@ public class ListenDQ implements TibrvMsgCallback {
 	@Override
 	public void onMsg(final TibrvListener listener, final TibrvMsg msg) {
 		System.out.println((new Date()).toString() + " " //
-				+ "subject=" + msg.getSendSubject() + ", reply=" + msg.getReplySubject() //
-				+ ", message=" + msg.toString());
+				+ "subject=" + msg.getSendSubject() + ", message=" + msg.toString());
 		System.out.flush();
 
 		msg.dispose();
@@ -144,7 +143,7 @@ public class ListenDQ implements TibrvMsgCallback {
 						System.out.println("Dispatcher is ENABLED");
 						setPerformDispatch(true);
 						break;
-						
+
 					case '\r':
 					case '\n':
 						break;

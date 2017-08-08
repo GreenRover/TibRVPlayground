@@ -1,5 +1,8 @@
 # Example code TODO
-* DQ Group
+* in Out, was rein geht ist in der Cloud / Bild
+* Zu offene Subjects für rvrd / match auf abbo nicht auf msg
+* Transport name identisch
+* Klasse FtMonitor
 
 # Example code DONE
 * basic Async
@@ -14,6 +17,7 @@
 * Queue Threads java
 * Config sichern
 * FT Group
+* DQ Group
 
 # Vorführen
 - Einsatzszenarien

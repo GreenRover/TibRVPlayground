@@ -34,6 +34,9 @@
 	<property name="jar-name-listen-dq" value="ListenDQ" />
 	<property name="main-class-listen-dq" value="ch.mtrail.tibrv.playground.ListenDQ" />
 	
+	<property name="jar-name-monitor-ft" value="MonitorFT" />
+	<property name="main-class-monitor-ft" value="ch.mtrail.tibrv.playground.MonitorFT" />
+	
 	<property name="jar-name-send" value="Send" />
 	<property name="main-class-send" value="ch.mtrail.tibrv.playground.Send" />
 
@@ -104,6 +107,11 @@
 		<jar destfile="${jar.dir}/${jar-name-listen-dq}.jar" basedir="${classes.dir}">
 			<manifest>
 				<attribute name="Main-Class" value="${main-class-listen-dq}" />
+			</manifest>
+		</jar>
+		<jar destfile="${jar.dir}/${jar-name-monitor-ft}.jar" basedir="${classes.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="${main-class-monitor-ft}" />
 			</manifest>
 		</jar>
 		<jar destfile="${jar.dir}/${jar-name-send}.jar" basedir="${classes.dir}">
@@ -218,6 +226,16 @@
 		</java>
 	</target>
 	
+	<target name="runMonitorFT" depends="jar">
+		<java fork="true" classname="${main-class-monitor-ft}">
+			<classpath>
+				<path refid="classpath" />
+				<path location="${jar.dir}/${jar-name-monitor-ft}.jar" />
+			</classpath>
+			<arg line="-service 7201 -network &quot;;224.1.1.1&quot; -groupName FT_group_Name" />
+		</java>
+	</target>
+	
 	<target name="runSend" depends="jar">
 		<java fork="true" classname="${main-class-send}">
 			<classpath>
@@ -289,6 +307,7 @@
 	<target name="listen-cm" depends="runListenCM" />
 	<target name="listen-ft" depends="runListenFT" />
 	<target name="listen-dq" depends="runListenDQ" />
+	<target name="monitor-ft" depends="runMonitorFT" />
 	
 	<target name="send" depends="runSend" />
 	<target name="send-ddos" depends="runSendStressFast" />

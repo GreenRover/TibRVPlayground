@@ -1,9 +1,3 @@
-# Example code TODO
-* in Out, was rein geht ist in der Cloud / Bild
-* Zu offene Subjects für rvrd / match auf abbo nicht auf msg
-* Transport name identisch
-* Klasse FtMonitor
-
 # Example code DONE
 * basic Async
 * Custom Data Types (FileTime)
@@ -18,6 +12,7 @@
 * Config sichern
 * FT Group
 * DQ Group
+* Klasse FtMonitor
 
 # Vorführen
 - Einsatzszenarien

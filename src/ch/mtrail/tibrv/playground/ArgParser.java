@@ -7,6 +7,29 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Example command:
+ *  myCommand -parameterA "foo" -parameterB "grr" -flagA -flagB "Argument A" "Argument B"
+ *  
+ * Parameter:
+ *   Key value set
+ *
+ * Argument:
+ *   Value list at the end of comment
+ *
+ * Flag:
+ *   Keys that can be set or not
+ *   
+ * Example:
+ * 	public static void main(final String args[]) {
+ *		final ArgParser argParser = new ArgParser("TibRvListenFT");
+ *		argParser.setOptionalParameter("service", "network", "daemon", "groupName");
+ *		argParser.parse(args);
+ *		
+ *<		argParser.getParameter("service");
+ *  
+ * @author GreenRover
+ */
 public class ArgParser {
 	private final List<String> optionalParameters = new ArrayList<>();
 	private final List<String> requiredParameters = new ArrayList<>();
@@ -136,12 +159,12 @@ public class ArgParser {
 			output.append("\t\t");
 		}
 	}
-
+	
 	/**
-	 * @return Can not be null
+	 * @return If Argument was not set the defaultValue will be returned
 	 * @throws Exception
 	 */
-	public String getArgument(final String argName) {
+	public String getArgument(final String argName, final String defaultValue) {
 		final int indexRequired = requiredArgs.indexOf(argName);
 		if (indexRequired >= 0) {
 			return extractedArguments.get(indexRequired);
@@ -152,11 +175,31 @@ public class ArgParser {
 			try {
 				return extractedArguments.get(indexOptional);
 			} catch (final IndexOutOfBoundsException e) {
-				return null;
+				return defaultValue;
 			}
 		}
 
-		throw new InvalidParameterException("Argument " + argName + " was not set as required or optional.");
+		throw new InvalidParameterException("Argument " + argName + " was not set as required or optional."); 
+	}
+
+	/**
+	 * @return Can not be null
+	 * @throws Exception
+	 */
+	public String getArgument(final String argName) {
+		return getArgument(argName, null);
+	}
+	
+	/**
+	 * @param parameterName
+	 * @return If Argument was not set the defaultValue will be returned
+	 */
+	public String getParameter(final String parameterName, final String defaultValue) {
+		if (!extractedParameter.containsKey(parameterName)) {
+			return defaultValue;
+		}
+		
+		return extractedParameter.get(parameterName);
 	}
 
 	/**
@@ -164,7 +207,7 @@ public class ArgParser {
 	 * @return Can be null for optional parameter.
 	 */
 	public String getParameter(final String parameterName) {
-		return extractedParameter.get(parameterName);
+		return getParameter(parameterName, null);
 	}
 	
 	public boolean isFlagSet(final String parameterName) {

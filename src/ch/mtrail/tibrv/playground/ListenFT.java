@@ -17,7 +17,7 @@ import com.tibco.tibrv.TibrvRvdTransport;
 public class ListenFT implements TibrvMsgCallback {
 
 	private boolean performDispatch = true;
-	private final String ftGroupName = "FT_roup_Name";
+	private final String ftGroupName = "FT_group_Name";
 	private TibrvFtMember ftMember;
 	private int ftStatus;
 

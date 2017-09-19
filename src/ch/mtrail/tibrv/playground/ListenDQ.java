@@ -3,12 +3,16 @@ package ch.mtrail.tibrv.playground;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import com.tibco.tibrv.Tibrv;
 import com.tibco.tibrv.TibrvCmListener;
 import com.tibco.tibrv.TibrvCmMsg;
 import com.tibco.tibrv.TibrvCmQueueTransport;
+import com.tibco.tibrv.TibrvDispatcher;
 import com.tibco.tibrv.TibrvException;
 import com.tibco.tibrv.TibrvListener;
 import com.tibco.tibrv.TibrvMsg;
@@ -18,9 +22,12 @@ import com.tibco.tibrv.TibrvRvdTransport;
 
 public class ListenDQ implements TibrvMsgCallback {
 
-	private boolean performDispatch = true;
 	private final String dqGroupName = "DQgroupName";
 	private TibrvQueue queue;
+	private List<TibrvDispatcher> dispatchers = new ArrayList<>();
+
+	private final static int threads = 5;
+	private TibrvCmQueueTransport dq;
 
 	public ListenDQ(final String service, final String network, final String daemon, final String subject) {
 
@@ -45,13 +52,11 @@ public class ListenDQ implements TibrvMsgCallback {
 			System.exit(1);
 		}
 
-		// DistributedQueue + listener using default queue
-		TibrvCmQueueTransport dq;
 		try {
 			queue = new TibrvQueue();
 
 			dq = new TibrvCmQueueTransport(transport, dqGroupName);
-			dq.setWorkerTasks(2);
+			dq.setWorkerTasks(threads);
 
 			new TibrvCmListener(queue, this, dq, subject, null);
 			System.err.println("Listening on: " + subject);
@@ -61,30 +66,21 @@ public class ListenDQ implements TibrvMsgCallback {
 			e.printStackTrace();
 			System.exit(1);
 		}
+
+		for (int i = 0; i <= threads; i++) {
+			dispatchers.add(new TibrvDispatcher("Dispatcher-" + i, queue));
+		}
 	}
 
 	public void dispatch() {
 		while (true) {
-			if (performDispatch) {
-				// dispatch Tibrv events
-				try {
-					// Wait max 0.5 sec, to listen on keyboard.
-					queue.timedDispatch(0.5d);
-				} catch (final TibrvException e) {
-					System.err.println("Exception dispatching default queue:");
-					e.printStackTrace();
-					System.exit(1);
-				} catch (final InterruptedException ie) {
-					System.exit(1);
-				}
-
-			} else {
-				// Dispatch is disabled, just idle
-				try {
-					Thread.sleep(500);
-				} catch (final InterruptedException e) {
-					e.printStackTrace();
-				}
+			try {
+				System.out.println("QueueLength: " + dq.getUnassignedMessageCount());
+				System.out.flush();
+				
+				TimeUnit.SECONDS.sleep(10);
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
 	}
@@ -97,26 +93,39 @@ public class ListenDQ implements TibrvMsgCallback {
 		} catch (TibrvException e) {
 			e.printStackTrace();
 		}
-		 
-		System.out.println((new Date()).toString() + " " //
+
+		System.out.println((new Date()).toString() + " " + Thread.currentThread().getName() + " START " //
 				+ "subject=" + msg.getSendSubject() + ", message=" + msg.toString() + ", seqno=" + seqno);
 		System.out.flush();
 
 		msg.dispose();
-		
+
 		try {
-			Thread.sleep(201);
+			TimeUnit.SECONDS.sleep(2);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-	}
-
-	public boolean isPerformDispatch() {
-		return performDispatch;
+		
+		System.out.println((new Date()).toString() + " " + Thread.currentThread().getName() + " FINISHED");
+		System.out.flush();
 	}
 
 	public void setPerformDispatch(final boolean performDispatch) {
-		this.performDispatch = performDispatch;
+		dispatchers.forEach(dispatcher -> {
+			try {
+				if (performDispatch) {
+					if (!dispatcher.isAlive()) {
+						dispatcher.start();
+					}
+				} else {
+					if (dispatcher.isAlive()) {
+						dispatcher.join();
+					}
+				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		});
 	}
 
 	public static void main(final String args[]) {

@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 import com.tibco.tibrv.Tibrv;
 import com.tibco.tibrv.TibrvException;
@@ -95,11 +97,7 @@ public class ListenMultiQueue implements TibrvMsgCallback {
 
 			} else {
 				// Dispatch is disabled, just idle
-				try {
-					Thread.sleep(500);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+				LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(500));
 			}
 		}
 	}
@@ -113,14 +111,14 @@ public class ListenMultiQueue implements TibrvMsgCallback {
 		if (msg.getReplySubject() != null) {
 			// Send reply msg if a request subject is set.
 			try {
-				Thread.sleep(500);
+				LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(500));
 
 				final TibrvMsg replyMsg = new TibrvMsg();
 				replyMsg.add("TYPE", "ANSWER");
 				replyMsg.add("ORG_MSG", msg.toString());
 
 				listener.getTransport().sendReply(replyMsg, msg);
-			} catch (TibrvException | InterruptedException e) {
+			} catch (TibrvException e) {
 				System.err.println("Failed to reply to msg:");
 				e.printStackTrace();
 			}

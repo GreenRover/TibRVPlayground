@@ -3,6 +3,8 @@ package ch.mtrail.tibrv.playground;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 import com.tibco.tibrv.Tibrv;
 import com.tibco.tibrv.TibrvException;
@@ -86,11 +88,7 @@ public class ListenThreadJavaA implements TibrvMsgCallback {
 		
 		msg.dispose();
 		
-		try {
-			Thread.sleep(500);
-		} catch (final InterruptedException e) {
-			e.printStackTrace();
-		}
+		LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(500));
 	}
 
 	public static void main(final String args[]) {

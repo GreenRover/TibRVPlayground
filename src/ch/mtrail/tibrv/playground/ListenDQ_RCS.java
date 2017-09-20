@@ -3,9 +3,9 @@ package ch.mtrail.tibrv.playground;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
@@ -22,16 +22,18 @@ import com.tibco.tibrv.TibrvMsgCallback;
 import com.tibco.tibrv.TibrvQueue;
 import com.tibco.tibrv.TibrvRvdTransport;
 
-public class ListenDQ implements TibrvMsgCallback {
+public class ListenDQ_RCS {
 
 	private final String dqGroupName = "DQgroupName";
 	private TibrvQueue queue;
-	private final List<RvDispatcher> dispatchers = new ArrayList<>();
+	private final Map<Thread, RcsDispatcher> dispatchers = new HashMap<>();
+	private final SynchronousQueue<TibrvMsg> syncQueue = new SynchronousQueue<>();
 
+	private final static int rv_threads = 1;
 	private final static int threads = 5;
 	private TibrvCmQueueTransport dq;
 
-	public ListenDQ(final String service, final String network, final String daemon, final String subject) {
+	public ListenDQ_RCS(final String service, final String network, final String daemon, final String subject) {
 
 		// open Tibrv in native implementation
 		try {
@@ -58,9 +60,9 @@ public class ListenDQ implements TibrvMsgCallback {
 			queue = new TibrvQueue();
 
 			dq = new TibrvCmQueueTransport(transport, dqGroupName);
-			dq.setWorkerTasks(threads);
+			dq.setWorkerTasks(rv_threads);
 
-			new TibrvCmListener(queue, this, dq, subject, null);
+			new TibrvCmListener(queue, new RvDispatcher(syncQueue), dq, subject, null);
 			System.err.println("Listening on: " + subject);
 
 		} catch (final TibrvException e) {
@@ -69,15 +71,22 @@ public class ListenDQ implements TibrvMsgCallback {
 			System.exit(1);
 		}
 
-		for (int i = 0; i <= threads; i++) {
-			final RvDispatcher dispatcher = new RvDispatcher(queue);
-			dispatchers.add(dispatcher);
-			final Thread thread = new Thread(dispatcher, "Dispatcher-" + i);
+		// Init Thread to take msg from TbiRv and put them into syncQueue
+		// Will block if no one is polling the queue
+		for (int i = 1; i <= rv_threads; i++) {
+			new TibrvDispatcher("RvDisp-" + i, queue);
+		}
+
+		// Process msgs form syncQueue
+		for (int i = 1; i <= threads; i++) {
+			RcsDispatcher dispatcher = new RcsDispatcher(syncQueue);
+			final Thread thread = new Thread(dispatcher, "Worker-" + i);
 			thread.start();
+			dispatchers.put(thread, dispatcher);
 		}
 	}
 
-	public void printDebugInfos() {
+	public void printDebugInfo() {
 		while (true) {
 			try {
 				System.out.println(
@@ -91,31 +100,20 @@ public class ListenDQ implements TibrvMsgCallback {
 		}
 	}
 
-	@Override
-	public void onMsg(final TibrvListener listener, final TibrvMsg msg) {
-		long seqno = -1;
-		try {
-			seqno = TibrvCmMsg.getSequence(msg);
-		} catch (final TibrvException e) {
-			e.printStackTrace();
-		}
-
-		System.out.println((new Date()).toString() + " " + Thread.currentThread().getName() + " START " //
-				+ "subject=" + msg.getSendSubject() + ", message=" + msg.toString() + ", seqno=" + seqno);
-		System.out.flush();
-
-		msg.dispose();
-
-		LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(2));
-
-		System.out.println((new Date()).toString() + " " + Thread.currentThread().getName() + " FINISHED");
-		System.out.flush();
-	}
-
 	public void setPerformDispatch(final boolean performDispatch) {
-		dispatchers.forEach(dispatcher -> {
-			dispatcher.setRun(performDispatch);
-		});
+		if (performDispatch) {
+			dispatchers.keySet().forEach(thread -> {
+				System.out.println("Starting: " + thread.getName());
+				RcsDispatcher dispatcher = dispatchers.get(thread);
+				dispatcher.setRun(true);
+			});
+		} else {
+			dispatchers.keySet().forEach(thread -> {
+				System.out.println("Stopping: " + thread.getName());
+					RcsDispatcher dispatcher = dispatchers.get(thread);
+					dispatcher.setRun(false);
+			});
+		}
 	}
 
 	public static void main(final String args[]) {
@@ -126,7 +124,7 @@ public class ListenDQ implements TibrvMsgCallback {
 		argParser.setRequiredArg("subject");
 		argParser.parse(args);
 
-		final ListenDQ listen = new ListenDQ(//
+		final ListenDQ_RCS listen = new ListenDQ_RCS(//
 				argParser.getParameter("service"), //
 				argParser.getParameter("network"), //
 				argParser.getParameter("daemon"), //
@@ -134,7 +132,7 @@ public class ListenDQ implements TibrvMsgCallback {
 
 		listen.startKeyListener();
 
-		listen.printDebugInfos();
+		listen.printDebugInfo();
 	}
 
 	private void startKeyListener() {
@@ -180,39 +178,72 @@ public class ListenDQ implements TibrvMsgCallback {
 
 }
 
-class RvDispatcher implements Runnable {
+class RvDispatcher implements TibrvMsgCallback {
+	private final SynchronousQueue<TibrvMsg> syncQueue;
 
-	private boolean performDispatch = true;
-	private final TibrvQueue queue;
+	public RvDispatcher(final SynchronousQueue<TibrvMsg> syncQueue) {
+		this.syncQueue = syncQueue;
+	}
 
-	public RvDispatcher(final TibrvQueue queue) {
-		this.queue = queue;
+	@Override
+	public void onMsg(final TibrvListener listener, final TibrvMsg msg) {
+		try {
+			System.out.println((new Date()).toString() + " " + Thread.currentThread().getName() + " TAKE  " //
+					+ "subject=" + msg.getSendSubject() + ", message=" + msg.toString() + ", seqno="
+					+ TibrvCmMsg.getSequence(msg));
+			System.out.flush();
+
+			syncQueue.put(msg);
+
+		} catch (final Exception e) {
+			e.printStackTrace();
+		}
+	}
+}
+
+class RcsDispatcher implements Runnable {
+
+	private final SynchronousQueue<TibrvMsg> syncQueue;
+	private boolean run = true;
+
+	public RcsDispatcher(final SynchronousQueue<TibrvMsg> syncQueue) {
+		this.syncQueue = syncQueue;
 	}
 
 	@Override
 	public void run() {
-		while (true) {
-			if (performDispatch) {
-				// dispatch Tibrv events
-				try {
-					// Wait max 0.5 sec, to listen on keyboard.
-					queue.timedDispatch(0.5d);
-				} catch (final TibrvException e) {
-					System.err.println("Exception dispatching default queue:");
-					e.printStackTrace();
-					System.exit(1);
-				} catch (final InterruptedException ie) {
-					System.exit(1);
-				}
-
-			} else {
-				// Dispatch is disabled, just idle
+		while (true ) {
+			if (!run) {
 				LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(500));
+				continue;
+			}
+			
+			try {
+				final TibrvMsg msg = syncQueue.poll(500, TimeUnit.MILLISECONDS);
+				if (msg != null) {
+					onMsg(msg);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
 	}
 
-	public void setRun(final boolean performDispatch) {
-		this.performDispatch = performDispatch;
+	public void onMsg(final TibrvMsg msg) throws InterruptedException, TibrvException {
+		System.out.println((new Date()).toString() + " " + Thread.currentThread().getName() + " START " //
+				+ "subject=" + msg.getSendSubject() + ", message=" + msg.toString() + ", seqno="
+				+ TibrvCmMsg.getSequence(msg));
+		System.out.flush();
+
+		LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(2));
+
+		msg.dispose();
+
+		System.out.println((new Date()).toString() + " " + Thread.currentThread().getName() + " FINISHED");
+		System.out.flush();
+	}
+	
+	public void setRun(boolean run) {
+		this.run = run;
 	}
 }

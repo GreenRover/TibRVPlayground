@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 import com.tibco.tibrv.Tibrv;
 import com.tibco.tibrv.TibrvException;
@@ -108,11 +110,7 @@ public class ListenFT implements TibrvMsgCallback {
 
 			} else {
 				// Dispatch is disabled, just idle
-				try {
-					Thread.sleep(500);
-				} catch (final InterruptedException e) {
-					e.printStackTrace();
-				}
+				LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(500));
 			}
 		}
 	}

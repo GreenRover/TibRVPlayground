@@ -1,6 +1,8 @@
 package ch.mtrail.tibrv.playground;
 
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 import com.tibco.tibrv.Tibrv;
 import com.tibco.tibrv.TibrvDispatcher;
@@ -73,11 +75,7 @@ public class ListenThreadRv implements TibrvMsgCallback {
 
 		msg.dispose();
 
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(500));
 	}
 
 	public static void main(final String args[]) {

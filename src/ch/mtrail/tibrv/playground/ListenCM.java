@@ -6,6 +6,8 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 import com.tibco.tibrv.Tibrv;
 import com.tibco.tibrv.TibrvCmListener;
@@ -85,11 +87,7 @@ public class ListenCM implements TibrvMsgCallback {
 
 			} else {
 				// Dispatch is disabled, just idle
-				try {
-					Thread.sleep(500);
-				} catch (final InterruptedException e) {
-					e.printStackTrace();
-				}
+				LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(500));
 			}
 		}
 	}
@@ -105,7 +103,7 @@ public class ListenCM implements TibrvMsgCallback {
 			final long seqno = TibrvCmMsg.getSequence(msg);
 
 			// do some work.
-			Thread.sleep(500);
+			LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(500));
 
 			// If it was not CM message or very first message
 			// we'll get seqno=0. Only confirm if seqno > 0.
@@ -117,7 +115,7 @@ public class ListenCM implements TibrvMsgCallback {
 			}
 
 			msg.dispose();
-		} catch (TibrvException | InterruptedException e) {
+		} catch (TibrvException e) {
 			e.printStackTrace();
 		}
 	}

@@ -178,41 +178,41 @@ public class ListenDQ implements TibrvMsgCallback {
 		System.out.println("Press\n\t\"D\" to disable Dispatcher\n\t\"E\" to enable Dispatcher ");
 	}
 
-}
-
-class RvDispatcher implements Runnable {
-
-	private boolean performDispatch = true;
-	private final TibrvQueue queue;
-
-	public RvDispatcher(final TibrvQueue queue) {
-		this.queue = queue;
-	}
-
-	@Override
-	public void run() {
-		while (true) {
-			if (performDispatch) {
-				// dispatch Tibrv events
-				try {
-					// Wait max 0.5 sec, to listen on keyboard.
-					queue.timedDispatch(0.5d);
-				} catch (final TibrvException e) {
-					System.err.println("Exception dispatching default queue:");
-					e.printStackTrace();
-					System.exit(1);
-				} catch (final InterruptedException ie) {
-					System.exit(1);
+	class RvDispatcher implements Runnable {
+		
+		private boolean performDispatch = true;
+		private final TibrvQueue queue;
+		
+		public RvDispatcher(final TibrvQueue queue) {
+			this.queue = queue;
+		}
+		
+		@Override
+		public void run() {
+			while (true) {
+				if (performDispatch) {
+					// dispatch Tibrv events
+					try {
+						// Wait max 0.5 sec, to listen on keyboard.
+						queue.timedDispatch(0.5d);
+					} catch (final TibrvException e) {
+						System.err.println("Exception dispatching default queue:");
+						e.printStackTrace();
+						System.exit(1);
+					} catch (final InterruptedException ie) {
+						System.exit(1);
+					}
+					
+				} else {
+					// Dispatch is disabled, just idle
+					LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(500));
 				}
-
-			} else {
-				// Dispatch is disabled, just idle
-				LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(500));
 			}
 		}
-	}
-
-	public void setRun(final boolean performDispatch) {
-		this.performDispatch = performDispatch;
+		
+		public void setRun(final boolean performDispatch) {
+			this.performDispatch = performDispatch;
+		}
 	}
 }
+

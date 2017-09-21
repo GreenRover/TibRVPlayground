@@ -36,7 +36,7 @@ public class MonitorFT implements TibrvFtMonitorCallback {
 
 		// create listener using default queue
 		try {
-			TibrvFtMonitor ftMonitor = new TibrvFtMonitor(Tibrv.defaultQueue(), this, transport, ftGroupName,
+			new TibrvFtMonitor(Tibrv.defaultQueue(), this, transport, ftGroupName,
 					lostInterval, null);
 			System.err.println("tibrvftmon: Waiting for group information... " + ftGroupName);
 		} catch (final TibrvException e) {

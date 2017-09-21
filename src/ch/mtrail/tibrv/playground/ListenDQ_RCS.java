@@ -176,74 +176,74 @@ public class ListenDQ_RCS {
 		System.out.println("Press\n\t\"D\" to disable Dispatcher\n\t\"E\" to enable Dispatcher ");
 	}
 
-}
-
-class RvDispatcher implements TibrvMsgCallback {
-	private final SynchronousQueue<TibrvMsg> syncQueue;
-
-	public RvDispatcher(final SynchronousQueue<TibrvMsg> syncQueue) {
-		this.syncQueue = syncQueue;
-	}
-
-	@Override
-	public void onMsg(final TibrvListener listener, final TibrvMsg msg) {
-		try {
-			System.out.println((new Date()).toString() + " " + Thread.currentThread().getName() + " TAKE  " //
-					+ "subject=" + msg.getSendSubject() + ", message=" + msg.toString() + ", seqno="
-					+ TibrvCmMsg.getSequence(msg));
-			System.out.flush();
-
-			syncQueue.put(msg);
-
-		} catch (final Exception e) {
-			e.printStackTrace();
+	class RvDispatcher implements TibrvMsgCallback {
+		private final SynchronousQueue<TibrvMsg> syncQueue;
+		
+		public RvDispatcher(final SynchronousQueue<TibrvMsg> syncQueue) {
+			this.syncQueue = syncQueue;
 		}
-	}
-}
-
-class RcsDispatcher implements Runnable {
-
-	private final SynchronousQueue<TibrvMsg> syncQueue;
-	private boolean run = true;
-
-	public RcsDispatcher(final SynchronousQueue<TibrvMsg> syncQueue) {
-		this.syncQueue = syncQueue;
-	}
-
-	@Override
-	public void run() {
-		while (true ) {
-			if (!run) {
-				LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(500));
-				continue;
-			}
-			
+		
+		@Override
+		public void onMsg(final TibrvListener listener, final TibrvMsg msg) {
 			try {
-				final TibrvMsg msg = syncQueue.poll(500, TimeUnit.MILLISECONDS);
-				if (msg != null) {
-					onMsg(msg);
-				}
-			} catch (Exception e) {
+				System.out.println((new Date()).toString() + " " + Thread.currentThread().getName() + " TAKE  " //
+						+ "subject=" + msg.getSendSubject() + ", message=" + msg.toString() + ", seqno="
+						+ TibrvCmMsg.getSequence(msg));
+				System.out.flush();
+				
+				syncQueue.put(msg);
+				
+			} catch (final Exception e) {
 				e.printStackTrace();
 			}
 		}
 	}
-
-	public void onMsg(final TibrvMsg msg) throws InterruptedException, TibrvException {
-		System.out.println((new Date()).toString() + " " + Thread.currentThread().getName() + " START " //
-				+ "subject=" + msg.getSendSubject() + ", message=" + msg.toString() + ", seqno="
-				+ TibrvCmMsg.getSequence(msg));
-		System.out.flush();
-
-		LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(2));
-
-		msg.dispose();
-
-		System.out.println((new Date()).toString() + " " + Thread.currentThread().getName() + " FINISHED");
-		System.out.flush();
-	}
 	
-	public void setRun(boolean run) {
-		this.run = run;
+	class RcsDispatcher implements Runnable {
+		
+		private final SynchronousQueue<TibrvMsg> syncQueue;
+		private boolean run = true;
+		
+		public RcsDispatcher(final SynchronousQueue<TibrvMsg> syncQueue) {
+			this.syncQueue = syncQueue;
+		}
+		
+		@Override
+		public void run() {
+			while (true ) {
+				if (!run) {
+					LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(500));
+					continue;
+				}
+				
+				try {
+					final TibrvMsg msg = syncQueue.poll(500, TimeUnit.MILLISECONDS);
+					if (msg != null) {
+						onMsg(msg);
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		public void onMsg(final TibrvMsg msg) throws InterruptedException, TibrvException {
+			System.out.println((new Date()).toString() + " " + Thread.currentThread().getName() + " START " //
+					+ "subject=" + msg.getSendSubject() + ", message=" + msg.toString() + ", seqno="
+					+ TibrvCmMsg.getSequence(msg));
+			System.out.flush();
+			
+			LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(2));
+			
+			msg.dispose();
+			
+			System.out.println((new Date()).toString() + " " + Thread.currentThread().getName() + " FINISHED");
+			System.out.flush();
+		}
+		
+		public void setRun(boolean run) {
+			this.run = run;
+		}
 	}
 }
+

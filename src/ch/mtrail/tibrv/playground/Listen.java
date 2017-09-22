@@ -49,6 +49,14 @@ public class Listen implements TibrvMsgCallback {
 		for (final String subject : subjects) {
 			// create listener using default queue
 			try {
+				/**
+				 *	TibrvListener(
+				 *		TibrvQueue queue,
+				 *		TibrvMsgCallback callback,
+				 *		TibrvTransport transport,
+				 *		java.lang.String subject,
+				 *		java.lang.Object closure)
+				 */
 				new TibrvListener(Tibrv.defaultQueue(), this, transport, subject, null);
 				System.err.println("Listening on: " + subject);
 			} catch (final TibrvException e) {

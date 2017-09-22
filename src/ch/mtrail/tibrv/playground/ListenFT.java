@@ -77,9 +77,20 @@ public class ListenFT implements TibrvMsgCallback {
 		 *   int weight, 
 		 *   int activeGoal, 
 		 *   
-		 *   double heartbeatInterval, 
+		 *   double heartbeatInterval,
+		 *          When this member is active, it sends heartbeat messages at this interval (in seconds).
 		 *   double preparationInterval,
+		 *          When the heartbeat signal from one or more active members has been
+		 *          silent for this interval (in seconds), Rendezvous fault tolerance software
+		 *          issues an early warning hint (TibrvFtMember.PREPARE_TO_ACTIVATE)
+		 *          to the ranking inactive member. This warning lets the inactive member
+		 *          prepare to activate, for example, by connecting to a database server, or
+		 *          allocating memory.
 		 *   double activationInterval, 
+		 *          When the heartbeat signal from one or more active members has been
+		 *          silent for this interval (in seconds), Rendezvous fault tolerance software
+		 *          considers the silent member to be lost, and issues the instruction to
+		 *          activate (TibrvFtMember.ACTIVATE) to the ranking inactive member
 		 *   Object closure 
 		 * )
 		 */

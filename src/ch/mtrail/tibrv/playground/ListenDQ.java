@@ -56,7 +56,22 @@ public class ListenDQ implements TibrvMsgCallback {
 
 		try {
 			queue = new TibrvQueue();
-
+			
+			/**
+			 * TibrvCmQueueTransport(
+			 *  TibrvRvdTransport transport,
+			 *  java.lang.String cmName,
+			 *  int workerWeight,
+			 *  int workerTasks,
+			 *  int schedulerWeight,
+			 *  double schedulerHeartbeat,   
+			 *          The scheduler sends heartbeat messages at this interval (in seconds).
+			 *  double schedulerActivation   
+			 *          When the heartbeat signal from the scheduler has been silent for this
+			 *          interval (in seconds), the cooperating member with the greatest
+			 *          scheduler weight takes its place as the new scheduler.
+			 * )
+			 */
 			dq = new TibrvCmQueueTransport(transport, dqGroupName);
 			dq.setWorkerTasks(threads);
 

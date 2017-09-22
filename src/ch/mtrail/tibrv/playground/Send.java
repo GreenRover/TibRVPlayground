@@ -16,9 +16,7 @@ public class Send {
 
 	private TibrvTransport transport = null;
 	private final Set<String> subjects;
-	private final String FIELD_NAME = "DATA";
-	private final String FIELD_INDEX = "INDEX";
-	private int msgSend = 0;
+	private int msgCount = 0;
 
 	public Send(final String service, final String network, final String daemon, final Set<String> subjects) {
 
@@ -59,18 +57,18 @@ public class Send {
 				System.exit(1);
 			}
 
-			msg.add(FIELD_NAME, msgString);
-			msg.add(FIELD_INDEX, msgSend);
+			msg.add("DATA", msgString);
+			msg.add("INDEX", msgCount);
 			transport.send(msg);
 			msg.dispose();
 
 		}
-		msgSend++;
+		msgCount++;
 	}
 
 	public void printStatus() {
 		final NumberFormat nf = NumberFormat.getInstance();
-		System.out.print("Msg send: " + nf.format(msgSend) + "\n");
+		System.out.print("Msg send: " + nf.format(msgCount) + "\n");
 	}
 
 	public static void main(final String args[]) {

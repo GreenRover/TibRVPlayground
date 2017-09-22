@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 import java.util.Date;
 
 import com.tibco.tibrv.Tibrv;
@@ -19,10 +20,11 @@ public class ListenFiles implements TibrvMsgCallback {
 
 	private boolean performDispose = false;
 	private Path dstFolder = null;
+	private final static short fileTimeType = TibrvMsg.USER_FIRST + 1;
 
 	public ListenFiles(final String service, final String network, final String daemon, final String subject,
 			final String folder) {
-
+		
 		if (folder != null && !folder.isEmpty()) {
 			this.dstFolder = Paths.get(folder);
 		}
@@ -30,6 +32,9 @@ public class ListenFiles implements TibrvMsgCallback {
 		// open Tibrv in native implementation
 		try {
 			Tibrv.open(Tibrv.IMPL_NATIVE);
+			
+			final FileTimeEncoder fileTimeEncoder = new FileTimeEncoder();
+			TibrvMsg.setHandlers(fileTimeType, fileTimeEncoder, fileTimeEncoder);
 		} catch (
 
 		final TibrvException e) {
@@ -81,7 +86,9 @@ public class ListenFiles implements TibrvMsgCallback {
 					": subject=" + msg.getSendSubject() + //
 					", filename=" + msg.get("FILENAME") + //
 					", size=" + msg.get("SIZE") + // 
-					", mime=" + ((TibrvMsg)msg.get("META")).get("mimeType"));
+					", mime=" + ((TibrvMsg)msg.get("META")).get("mimeType") + //
+					", creationTime=" + (FileTime)((TibrvMsg)msg.get("META")).get("creationTime")
+					);
 			System.out.flush();
 
 			if (dstFolder != null) {

@@ -81,7 +81,7 @@ public class SendFiles {
 		msg.add("SIZE", attributes.size());
 		msg.add("CONTENT", content);
 		final TibrvMsg metaMsg = new TibrvMsg();
-		// Without 3rd parameter, we wil run into "TibrvException[error=34,message=Invalid type of data object]"
+		// Without 3rd parameter, we will run into "TibrvException[error=34,message=Invalid type of data object]"
 		metaMsg.add("creationTime", attributes.creationTime(), fileTimeType);
 		metaMsg.add("lastAccessTime", attributes.lastAccessTime(), fileTimeType);
 		metaMsg.add("lastModifiedTime", attributes.lastModifiedTime(), fileTimeType);

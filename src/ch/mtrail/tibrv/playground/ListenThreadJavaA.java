@@ -68,11 +68,13 @@ public class ListenThreadJavaA implements TibrvMsgCallback {
 			threadPool.execute(() -> {
 				while (true) {
 					try {
-						group.dispatch();
+						group.timedDispatch(0.5);
 					} catch (final TibrvException | InterruptedException e) {
 						System.err.println("Exception dispatching default queue:");
 						e.printStackTrace();
 					}
+					
+					// IF shutdown == exit
 				}
 			});
 		}
@@ -83,7 +85,7 @@ public class ListenThreadJavaA implements TibrvMsgCallback {
 	@Override
 	public void onMsg(final TibrvListener listener, final TibrvMsg msg) {
 		System.out.println((new Date()).toString() + ": subject=" + msg.getSendSubject() + ", reply="
-				+ msg.getReplySubject() + ", message=" + msg.toString());
+				+ msg.getReplySubject() + ", message=" + msg.toString() + " THREAD: " + Thread.currentThread().getName());
 		System.out.flush();
 		
 		msg.dispose();

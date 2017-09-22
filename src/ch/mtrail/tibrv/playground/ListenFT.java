@@ -21,7 +21,9 @@ public class ListenFT implements TibrvMsgCallback {
 	private boolean performDispatch = true;
 	private final String ftGroupName = "FT_group_Name";
 	private TibrvFtMember ftMember;
-	private int ftStatus;
+	
+	// Wenn man dir nichts anderes sagt, bist du PASIVE
+	private int ftStatus = TibrvFtMember.DEACTIVATE;
 
 	public ListenFT(final String service, final String network, final String daemon, final String subject) {
 

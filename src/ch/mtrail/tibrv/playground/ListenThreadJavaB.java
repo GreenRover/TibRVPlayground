@@ -68,7 +68,7 @@ public class ListenThreadJavaB implements TibrvMsgCallback {
 	public void dispatch() {
 		while (true) {
 			try {
-				group.dispatch();
+				group.timedDispatch(0.5);
 			} catch (final TibrvException | InterruptedException e) {
 				System.err.println("Exception dispatching default queue:");
 				e.printStackTrace();
@@ -78,10 +78,13 @@ public class ListenThreadJavaB implements TibrvMsgCallback {
 
 	@Override
 	public void onMsg(final TibrvListener listener, final TibrvMsg msg) {
+		System.out.println((new Date()).toString() + ": take THREAD: " + Thread.currentThread().getName());
+		System.out.flush();
+		
 		// System.out.println("onMsg");
 		threadPool.execute(() -> {
 			System.out.println((new Date()).toString() + ": subject=" + msg.getSendSubject() + ", reply="
-					+ msg.getReplySubject() + ", message=" + msg.toString());
+					+ msg.getReplySubject() + ", message=" + msg.toString() + " THREAD: " + Thread.currentThread().getName());
 			System.out.flush();
 
 			LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(500));

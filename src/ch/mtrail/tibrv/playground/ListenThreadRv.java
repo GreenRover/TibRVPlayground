@@ -70,7 +70,7 @@ public class ListenThreadRv implements TibrvMsgCallback {
 	@Override
 	public void onMsg(final TibrvListener listener, final TibrvMsg msg) {
 		System.out.println((new Date()).toString() + ": subject=" + msg.getSendSubject() + ", reply="
-				+ msg.getReplySubject() + ", message=" + msg.toString());
+				+ msg.getReplySubject() + ", message=" + msg.toString() + " THREAD: " + Thread.currentThread().getName());
 		System.out.flush();
 
 		msg.dispose();

@@ -1,7 +1,6 @@
 # TODO
-Launcher
-Request Reply
 Group prio
+closure
 
 # Example code DONE
 * basic Async

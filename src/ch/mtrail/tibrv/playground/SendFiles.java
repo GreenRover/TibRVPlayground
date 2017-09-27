@@ -1,60 +1,35 @@
 package ch.mtrail.tibrv.playground;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 
-import com.tibco.tibrv.Tibrv;
+import com.tibco.tibrv.TibrvDispatcher;
 import com.tibco.tibrv.TibrvException;
-import com.tibco.tibrv.TibrvListener;
 import com.tibco.tibrv.TibrvMsg;
-import com.tibco.tibrv.TibrvRvdTransport;
-import com.tibco.tibrv.TibrvTransport;
+import com.tibco.tibrv.TibrvQueueGroup;
 
-public class SendFiles {
+public class SendFiles extends Abstract {
 
-	private TibrvTransport transport = null;
 	private final String subject;
 	private final static short fileTimeType = TibrvMsg.USER_FIRST + 1;
 
 	public SendFiles(final String service, final String network, final String daemon, final String subject) {
+		super(service, network, daemon);
 		this.subject = subject;
 
-		// open Tibrv in native implementation
 		try {
-			Tibrv.open(Tibrv.IMPL_NATIVE);
-			TibrvMsg.setStringEncoding("UTF-8");
-
 			final FileTimeEncoder fileTimeEncoder = new FileTimeEncoder();
 			TibrvMsg.setHandlers(fileTimeType, fileTimeEncoder, fileTimeEncoder);
-		} catch (
-
-		final TibrvException | UnsupportedEncodingException e) {
-			System.err.println("Failed to open Tibrv in native implementation:");
-			e.printStackTrace();
-			System.exit(1);
-		}
-
-		// Create RVD transport
-		try {
-			transport = new TibrvRvdTransport(service, network, daemon);
+			
+			// Create error listener
+			final TibrvQueueGroup group = new TibrvQueueGroup();
+			group.add(createErrorHandler());
+			dispatchers.add(new TibrvDispatcher(group));
 		} catch (final TibrvException e) {
-			System.err.println("Failed to create TibrvRvdTransport:");
-			e.printStackTrace();
-			System.exit(1);
-		}
-		
-		// Create error listener
-		try {
-			final ErrorLogger errorLogger = new ErrorLogger();
-			new TibrvListener(Tibrv.defaultQueue(), errorLogger, transport, "_RV.ERROR.>", null);
-			new TibrvListener(Tibrv.defaultQueue(), errorLogger, transport, "_RV.WARN.>", null);
-		} catch (final TibrvException e) {
-			System.err.println("Failed to create ErrorHandler:");
 			e.printStackTrace();
 			System.exit(1);
 		}
@@ -64,24 +39,19 @@ public class SendFiles {
 		// Create the message
 		final TibrvMsg msg = new TibrvMsg();
 
-		// Set send subject into the message
-		try {
-			msg.setSendSubject(subject);
-		} catch (final TibrvException e) {
-			System.err.println("Failed to set send subject:");
-			e.printStackTrace();
-			System.exit(1);
-		}
+		msg.setSendSubject(subject);
 
 		final byte[] content = Files.readAllBytes(file);
 		final BasicFileAttributes attributes = Files.readAttributes(file, BasicFileAttributes.class);
 
-		// Without toString we will run into "TibrvException[error=34,message=Invalid type of data object]"
+		// Without toString we will run into
+		// "TibrvException[error=34,message=Invalid type of data object]"
 		msg.add("FILENAME", file.getFileName().toString());
 		msg.add("SIZE", attributes.size());
 		msg.add("CONTENT", content);
 		final TibrvMsg metaMsg = new TibrvMsg();
-		// Without 3rd parameter, we will run into "TibrvException[error=34,message=Invalid type of data object]"
+		// Without 3rd parameter, we will run into
+		// "TibrvException[error=34,message=Invalid type of data object]"
 		metaMsg.add("creationTime", attributes.creationTime(), fileTimeType);
 		metaMsg.add("lastAccessTime", attributes.lastAccessTime(), fileTimeType);
 		metaMsg.add("lastModifiedTime", attributes.lastModifiedTime(), fileTimeType);
@@ -89,7 +59,8 @@ public class SendFiles {
 		// new TibrvDate()
 		final String mimeType = Files.probeContentType(file);
 		if (mimeType != null) {
-			// NULL is not permitted: java.lang.IllegalArgumentException: Field data is null
+			// NULL is not permitted: java.lang.IllegalArgumentException: Field
+			// data is null
 			metaMsg.add("mimeType", mimeType);
 		}
 		msg.add("META", metaMsg);
@@ -105,7 +76,7 @@ public class SendFiles {
 		argParser.setRequiredArg("subject");
 		argParser.parse(args);
 
-		final SendFiles send = new SendFiles(//
+		final SendFiles sender = new SendFiles(//
 				argParser.getParameter("service"), //
 				argParser.getParameter("network"), //
 				argParser.getParameter("daemon"), //
@@ -116,11 +87,14 @@ public class SendFiles {
 			try (DirectoryStream<Path> ds = Files.newDirectoryStream(path)) {
 				for (final Path child : ds) {
 					if (Files.isRegularFile(child)) {
-						send.send(child);
+						sender.send(child);
 						System.out.println("Submitted: " + child);
 					}
 				}
 			}
+			
+			System.out.println("DONE");
+			sender.shutdown();
 		} catch (final TibrvException | IOException e) {
 			e.printStackTrace();
 		}

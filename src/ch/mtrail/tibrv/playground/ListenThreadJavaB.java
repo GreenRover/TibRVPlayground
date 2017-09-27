@@ -6,45 +6,23 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
-import com.tibco.tibrv.Tibrv;
 import com.tibco.tibrv.TibrvException;
 import com.tibco.tibrv.TibrvListener;
 import com.tibco.tibrv.TibrvMsg;
 import com.tibco.tibrv.TibrvMsgCallback;
 import com.tibco.tibrv.TibrvQueue;
 import com.tibco.tibrv.TibrvQueueGroup;
-import com.tibco.tibrv.TibrvRvdTransport;
-import com.tibco.tibrv.TibrvTransport;
 
-public class ListenThreadJavaB implements TibrvMsgCallback {
+public class ListenThreadJavaB extends Abstract implements TibrvMsgCallback {
 
 	private TibrvQueueGroup group;
 	private final ExecutorService threadPool;
 
 	public ListenThreadJavaB(final String service, final String network, final String daemon, final String subject,
 			final int threads) {
+		super(service, network, daemon);
+
 		threadPool = Executors.newFixedThreadPool(threads);
-
-		// open Tibrv in native implementation
-		try {
-			Tibrv.open(Tibrv.IMPL_NATIVE);
-		} catch (
-
-		final TibrvException e) {
-			System.err.println("Failed to open Tibrv in native implementation:");
-			e.printStackTrace();
-			System.exit(1);
-		}
-
-		// Create RVD transport
-		TibrvTransport transport = null;
-		try {
-			transport = new TibrvRvdTransport(service, network, daemon);
-		} catch (final TibrvException e) {
-			System.err.println("Failed to create TibrvRvdTransport:");
-			e.printStackTrace();
-			System.exit(1);
-		}
 
 		try {
 			group = new TibrvQueueGroup();
@@ -53,11 +31,7 @@ public class ListenThreadJavaB implements TibrvMsgCallback {
 			group.add(queue);
 
 			// Create error listener
-			final TibrvQueue errorQueue = new TibrvQueue();
-			final ErrorLogger errorLogger = new ErrorLogger();
-			new TibrvListener(errorQueue, errorLogger, transport, "_RV.ERROR.>", null);
-			new TibrvListener(errorQueue, errorLogger, transport, "_RV.WARN.>", null);
-			group.add(errorQueue);
+			group.add(createErrorHandler());
 		} catch (final TibrvException e) {
 			System.err.println("Failed to create listener:");
 			e.printStackTrace();
@@ -66,14 +40,7 @@ public class ListenThreadJavaB implements TibrvMsgCallback {
 	}
 
 	public void dispatch() {
-		while (true) {
-			try {
-				group.timedDispatch(0.5);
-			} catch (final TibrvException | InterruptedException e) {
-				System.err.println("Exception dispatching default queue:");
-				e.printStackTrace();
-			}
-		}
+		dispatch(group);
 	}
 
 	@Override

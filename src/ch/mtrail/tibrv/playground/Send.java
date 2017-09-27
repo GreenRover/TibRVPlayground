@@ -6,61 +6,32 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import com.tibco.tibrv.Tibrv;
 import com.tibco.tibrv.TibrvException;
 import com.tibco.tibrv.TibrvMsg;
-import com.tibco.tibrv.TibrvRvdTransport;
-import com.tibco.tibrv.TibrvTransport;
 
-public class Send {
-
-	private TibrvTransport transport = null;
+public class Send extends Abstract {
 	private final Set<String> subjects;
 	private int msgCount = 0;
 
 	public Send(final String service, final String network, final String daemon, final Set<String> subjects) {
+		super(service, network, daemon);
 
 		this.subjects = subjects;
-
-		// open Tibrv in native implementation
-		try {
-			Tibrv.open(Tibrv.IMPL_NATIVE);
-		} catch (
-
-		final TibrvException e) {
-			System.err.println("Failed to open Tibrv in native implementation:");
-			e.printStackTrace();
-			System.exit(1);
-		}
-
-		// Create RVD transport
-		try {
-			transport = new TibrvRvdTransport(service, network, daemon);
-		} catch (final TibrvException e) {
-			System.err.println("Failed to create TibrvRvdTransport:");
-			e.printStackTrace();
-			System.exit(1);
-		}
 	}
 
 	public void send(final String msgString) throws TibrvException {
 		for (final String subject : subjects) {
-			// Create the message
-			final TibrvMsg msg = new TibrvMsg();
-
-			// Set send subject into the message
 			try {
+				// Create the message
+				final TibrvMsg msg = new TibrvMsg();
 				msg.setSendSubject(subject);
+				msg.add("DATA", msgString);
+				msg.add("INDEX", msgCount);
+				transport.send(msg);
+				msg.dispose();
 			} catch (final TibrvException e) {
-				System.err.println("Failed to set send subject:");
-				e.printStackTrace();
-				System.exit(1);
+				handleFatalError(e);
 			}
-
-			msg.add("DATA", msgString);
-			msg.add("INDEX", msgCount);
-			transport.send(msg);
-			msg.dispose();
 
 		}
 		msgCount++;
@@ -96,14 +67,14 @@ public class Send {
 			System.exit(-1);
 		}
 
-		final Send send = new Send(//
+		final Send sender = new Send(//
 				argParser.getParameter("service"), //
 				argParser.getParameter("network"), //
 				argParser.getParameter("daemon"), //
 				subjects);
 
 		try {
-			send.send(argParser.getArgument("msg"));
+			sender.send(argParser.getArgument("msg"));
 			System.out.println("Submitted: " + argParser.getArgument("msg"));
 
 			final String intervalStr = argParser.getParameter("interval");
@@ -111,11 +82,11 @@ public class Send {
 				final int intervalMs = Integer.parseInt(intervalStr);
 				while (true) {
 					if (intervalMs > 0) {
-						// -interval 0  == hard core stress test
+						// -interval 0 == hard core stress test
 						TimeUnit.MILLISECONDS.sleep(intervalMs);
 					}
-					send.send(argParser.getArgument("msg"));
-					send.printStatus();
+					sender.send(argParser.getArgument("msg"));
+					sender.printStatus();
 				}
 			}
 		} catch (TibrvException | InterruptedException e) {

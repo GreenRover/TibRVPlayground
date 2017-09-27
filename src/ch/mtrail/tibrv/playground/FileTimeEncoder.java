@@ -24,7 +24,7 @@ public class FileTimeEncoder implements TibrvMsgEncoder, TibrvMsgDecoder {
 			final long unixTime = in.readLong();
 
 			return FileTime.fromMillis(unixTime);
-		} catch (IOException ioe) {
+		} catch (final IOException ioe) {
 			ioe.printStackTrace();
 			return null;
 		}

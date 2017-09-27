@@ -7,9 +7,9 @@ import com.tibco.tibrv.TibrvMsg;
 import com.tibco.tibrv.TibrvMsgCallback;
 
 /**
- * Falls eine Fehler zu spät auftritt, kann TibRv keine Exception mehr schmeissen.
- * Dann wird eine Fehlermeldung über diesen Weg gesendet.
- * Eine Zuordnung zu der verursachenden Msg ist nahezu unmöglich.
+ * Falls eine Fehler zu spät auftritt, kann TibRv keine Exception mehr
+ * schmeissen. Dann wird eine Fehlermeldung über diesen Weg gesendet. Eine
+ * Zuordnung zu der verursachenden Msg ist nahezu unmöglich.
  */
 public class ErrorLogger implements TibrvMsgCallback {
 	@Override

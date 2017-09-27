@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.FileTime;
 import java.util.Date;
 
 import com.tibco.tibrv.Tibrv;
@@ -13,70 +12,34 @@ import com.tibco.tibrv.TibrvException;
 import com.tibco.tibrv.TibrvListener;
 import com.tibco.tibrv.TibrvMsg;
 import com.tibco.tibrv.TibrvMsgCallback;
-import com.tibco.tibrv.TibrvRvdTransport;
-import com.tibco.tibrv.TibrvTransport;
 
-public class ListenFiles implements TibrvMsgCallback {
+public class ListenFiles extends Abstract implements TibrvMsgCallback {
 
-	private boolean performDispose = false;
 	private Path dstFolder = null;
 	private final static short fileTimeType = TibrvMsg.USER_FIRST + 1;
 
 	public ListenFiles(final String service, final String network, final String daemon, final String subject,
 			final String folder) {
+		super(service, network, daemon);
 		
-		if (folder != null && !folder.isEmpty()) {
-			this.dstFolder = Paths.get(folder);
-		}
-
-		// open Tibrv in native implementation
 		try {
-			Tibrv.open(Tibrv.IMPL_NATIVE);
-			
 			final FileTimeEncoder fileTimeEncoder = new FileTimeEncoder();
 			TibrvMsg.setHandlers(fileTimeType, fileTimeEncoder, fileTimeEncoder);
-		} catch (
-
-		final TibrvException e) {
-			System.err.println("Failed to open Tibrv in native implementation:");
-			e.printStackTrace();
-			System.exit(1);
-		}
-
-		// Create RVD transport
-		TibrvTransport transport = null;
-		try {
-			transport = new TibrvRvdTransport(service, network, daemon);
-		} catch (final TibrvException e) {
-			System.err.println("Failed to create TibrvRvdTransport:");
-			e.printStackTrace();
-			System.exit(1);
-		}
-
-		// create listener using default queue
-		try {
+			
+			if (folder != null && !folder.isEmpty()) {
+				this.dstFolder = Paths.get(folder);
+			}
+	
+			// create listener using default queue
 			new TibrvListener(Tibrv.defaultQueue(), this, transport, subject, null);
-			System.err.println("Listening on: " + subject);
+			System.out.println("Listening on: " + subject);
 		} catch (final TibrvException e) {
-			System.err.println("Failed to create listener:");
-			e.printStackTrace();
-			System.exit(1);
+			handleFatalError(e);
 		}
 	}
 	
 	public void dispatch() {
-		// dispatch Tibrv events
-		while (true) {
-			try {
-				Tibrv.defaultQueue().dispatch();
-			} catch (final TibrvException e) {
-				System.err.println("Exception dispatching default queue:");
-				e.printStackTrace();
-				System.exit(1);
-			} catch (final InterruptedException ie) {
-				System.exit(1);
-			}
-		}
+		dispatch(Tibrv.defaultQueue());
 	}
 
 	@Override
@@ -87,7 +50,7 @@ public class ListenFiles implements TibrvMsgCallback {
 					", filename=" + msg.get("FILENAME") + //
 					", size=" + msg.get("SIZE") + // 
 					", mime=" + ((TibrvMsg)msg.get("META")).get("mimeType") + //
-					", creationTime=" + (FileTime)((TibrvMsg)msg.get("META")).get("creationTime")
+					", creationTime=" + ((TibrvMsg)msg.get("META")).get("creationTime")
 					);
 			System.out.flush();
 
@@ -100,7 +63,7 @@ public class ListenFiles implements TibrvMsgCallback {
 			}
 
 		} catch (final TibrvException e) {
-			e.printStackTrace();
+			handleFatalError(e);
 		}
 
 		if (performDispose) {
@@ -114,14 +77,6 @@ public class ListenFiles implements TibrvMsgCallback {
 
 		final File file = new File(dstFolder.toAbsolutePath().toString(), fileName);
 		Files.write(file.toPath(), content);
-	}
-
-	public void setPerformDispose() {
-		setPerformDispose(true);
-	}
-
-	public void setPerformDispose(final boolean performDispose) {
-		this.performDispose = performDispose;
 	}
 
 	public static void main(final String args[]) {

@@ -61,7 +61,7 @@ public class ArgParser {
 	public void setOptionalArg(final String... args) {
 		optionalArgs.addAll(Arrays.asList(args));
 	}
-	
+
 	public void setFlags(final String... possibleFlags) {
 		flags.addAll(Arrays.asList(possibleFlags));
 	}
@@ -70,7 +70,6 @@ public class ArgParser {
 		extract(args);
 		validateParameters();
 		validateArguments();
-
 	}
 
 	private void extract(final String[] args) {
@@ -131,7 +130,7 @@ public class ArgParser {
 		}
 
 		for (final String flag : flags) {
-		        printToErrIfLineToLong(usageMsg);
+			printToErrIfLineToLong(usageMsg);
 			usageMsg.append(" [-" + flag + "]");
 		}
 
@@ -159,7 +158,7 @@ public class ArgParser {
 			output.append("\t\t");
 		}
 	}
-	
+
 	/**
 	 * @return If Argument was not set the defaultValue will be returned
 	 * @throws Exception
@@ -179,7 +178,7 @@ public class ArgParser {
 			}
 		}
 
-		throw new InvalidParameterException("Argument " + argName + " was not set as required or optional."); 
+		throw new InvalidParameterException("Argument " + argName + " was not set as required or optional.");
 	}
 
 	/**
@@ -189,7 +188,7 @@ public class ArgParser {
 	public String getArgument(final String argName) {
 		return getArgument(argName, null);
 	}
-	
+
 	/**
 	 * @param parameterName
 	 * @return If Argument was not set the defaultValue will be returned
@@ -198,7 +197,7 @@ public class ArgParser {
 		if (!extractedParameter.containsKey(parameterName)) {
 			return defaultValue;
 		}
-		
+
 		return extractedParameter.get(parameterName);
 	}
 
@@ -209,7 +208,7 @@ public class ArgParser {
 	public String getParameter(final String parameterName) {
 		return getParameter(parameterName, null);
 	}
-	
+
 	public boolean isFlagSet(final String parameterName) {
 		return extractedFlags.contains(parameterName);
 	}

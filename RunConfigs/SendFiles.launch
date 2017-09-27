@@ -7,6 +7,6 @@
 <listEntry value="1"/>
 </listAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="ch.mtrail.tibrv.playground.SendFiles"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-service 7201 -network &quot;;224.1.1.1&quot; -folder &quot;${folder_prompt}&quot; HH.TEST.FILE"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-service 7201 -network &quot;;224.1.1.1&quot; -folder &quot;${folder_prompt}&quot; HH.TEST.FILES"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="TibRVPlayground"/>
 </launchConfiguration>

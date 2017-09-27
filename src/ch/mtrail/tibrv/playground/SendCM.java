@@ -14,58 +14,35 @@ import com.tibco.tibrv.TibrvException;
 import com.tibco.tibrv.TibrvListener;
 import com.tibco.tibrv.TibrvMsg;
 import com.tibco.tibrv.TibrvMsgCallback;
-import com.tibco.tibrv.TibrvRvdTransport;
 
-public class SendCM implements TibrvMsgCallback {
+public class SendCM extends Abstract implements TibrvMsgCallback {
 
-	private TibrvRvdTransport transport = null;
 	private TibrvCmTransport cmTransport;
 	private final String subject;
-	private final String FIELD_NAME = "DATA";
-	private final String FIELD_INDEX = "INDEX";
 	private String cmname = "MyProgrammAndTheTaskItDoesIdentification__SendCM";
 	// Confirmation advisory subject
 	private static final String confirmAdvisorySubject = "_RV.INFO.RVCM.DELIVERY.CONFIRM.>";
-	private int msgSend = 0;
+	private int msgCount = 0;
 
 	public SendCM(final String service, final String network, final String daemon, final String subject) {
+		super(service, network, daemon);
+		this.subject = subject;
 		
 		try {
 			cmname = "MyProgrammAndTheTaskItDoesIdentification__SendCM_" + InetAddress.getLocalHost().getHostName();
-		} catch (final UnknownHostException e1) {
-			e1.printStackTrace();
-			System.exit(1);
-		}
 
-		this.subject = subject;
-
-		// open Tibrv in native implementation
-		try {
-			Tibrv.open(Tibrv.IMPL_NATIVE);
-		} catch (
-
-		final TibrvException e) {
-			System.err.println("Failed to open Tibrv in native implementation:");
-			e.printStackTrace();
-			System.exit(1);
-		}
-
-		// Create RVD transport
-		try {
-			transport = new TibrvRvdTransport(service, network, daemon);
 			cmTransport = new TibrvCmTransport(transport, cmname, true);
 
 			// Create listener for delivery confirmation advisory messages
 			new TibrvListener(Tibrv.defaultQueue(), this, transport, confirmAdvisorySubject, null);
 			new TibrvDispatcher(Tibrv.defaultQueue());
 
-		} catch (final TibrvException e) {
-			System.err.println("Failed to create TibrvRvdTransport:");
-			e.printStackTrace();
-			System.exit(1);
+		} catch (final TibrvException | UnknownHostException e) {
+			handleFatalError(e);
 		}
 	}
 
+	@Override
 	public void onMsg(final TibrvListener listener, final TibrvMsg msg) {
 		try {
 			final long seqno = msg.getAsLong("seqno", 0);
@@ -80,42 +57,32 @@ public class SendCM implements TibrvMsgCallback {
 	}
 
 	public void send(final String msgString) throws TibrvException {
-		// Create the message
-		final TibrvMsg msg = new TibrvMsg();
-
-		// Set send subject into the message
 		try {
+			// Create the message
+			final TibrvMsg msg = new TibrvMsg();
+			
 			msg.setSendSubject(subject);
+			
+			msg.add("DATA", msgString);
+			msg.add("INDEX", msgCount);
+			
+			// Msg must be delivered within 5sec
+			TibrvCmMsg.setTimeLimit(msg, 5.0);
+			
+			// Send message into the queue
+			cmTransport.send(msg);
+			
+			System.out.println(
+					(new Date()).toString() + " SEND: subject=" + msg.getSendSubject() + ", message=" + msg.toString());
+			
+			msg.dispose();
+			msgCount++;
+			
 		} catch (final TibrvException e) {
-			System.err.println("Failed to set send subject:");
-			e.printStackTrace();
-			System.exit(1);
+			handleFatalError(e);
 		}
-
-		msg.add(FIELD_NAME, msgString);
-		msg.add(FIELD_INDEX, msgSend);
-		
-		// Msg must be delivered within 5sec
-		TibrvCmMsg.setTimeLimit(msg, 5.0);
-
-		// Send message into the queue
-		cmTransport.send(msg);
-
-		System.out.println(
-				(new Date()).toString() + " SEND: subject=" + msg.getSendSubject() + ", message=" + msg.toString());
-
-		msg.dispose();
-		msgSend++;
 	}
 	
-	public void stopDispatcher() {
-		try {
-			Tibrv.close();
-		} catch (final TibrvException e) {
-			e.printStackTrace();
-		}
-	}
-
 	public static void main(final String args[]) {
 		// Debug.diplayEnvInfo();
 
@@ -125,14 +92,16 @@ public class SendCM implements TibrvMsgCallback {
 		argParser.setRequiredArg("msg", "subject");
 		argParser.parse(args);
 
-		final SendCM send = new SendCM(//
+		final SendCM sender = new SendCM(//
 				argParser.getParameter("service"), //
 				argParser.getParameter("network"), //
 				argParser.getParameter("daemon"), //
 				argParser.getArgument("subject"));
 
+		
+		
 		try {
-			send.send(argParser.getArgument("msg"));
+			sender.send(argParser.getArgument("msg"));
 			System.out.println("Submitted: " + argParser.getArgument("msg"));
 
 			final String intervalStr = argParser.getParameter("interval");
@@ -143,14 +112,14 @@ public class SendCM implements TibrvMsgCallback {
 						// -interval 0 == hard core stress test
 						TimeUnit.MILLISECONDS.sleep(intervalMs);
 					}
-					send.send(argParser.getArgument("msg"));
+					sender.send(argParser.getArgument("msg"));
 				}
 			}
+			
+			Tibrv.close();
 		} catch (TibrvException | InterruptedException e) {
 			e.printStackTrace();
 		}
-		
-		send.stopDispatcher();
 	}
 
 }

@@ -1,64 +1,31 @@
 package ch.mtrail.tibrv.playground;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
 
 import com.tibco.tibrv.Tibrv;
 import com.tibco.tibrv.TibrvException;
 import com.tibco.tibrv.TibrvListener;
 import com.tibco.tibrv.TibrvMsg;
 import com.tibco.tibrv.TibrvMsgCallback;
-import com.tibco.tibrv.TibrvRvdTransport;
-import com.tibco.tibrv.TibrvTransport;
 
-public class Listen implements TibrvMsgCallback {
-
-	private boolean performDispose = false;
-	private boolean performDispatch = true;
+public class Listen extends Abstract implements TibrvMsgCallback {
 
 	public Listen(final String service, final String network, final String daemon, final List<String> subjects) {
-
-		// open Tibrv in native implementation
-		try {
-			Tibrv.open(Tibrv.IMPL_NATIVE);
-		} catch (
-
-		final TibrvException e) {
-			System.err.println("Failed to open Tibrv in native implementation:");
-			e.printStackTrace();
-			System.exit(1);
-		}
-
-		// Create RVD transport
-		TibrvTransport transport = null;
-		try {
-			transport = new TibrvRvdTransport(service, network, daemon);
-		} catch (final TibrvException e) {
-			System.err.println("Failed to create TibrvRvdTransport:");
-			e.printStackTrace();
-			System.exit(1);
-		}
+		super(service, network, daemon);
 
 		for (final String subject : subjects) {
 			// create listener using default queue
 			try {
 				/**
-				 *	TibrvListener(
-				 *		TibrvQueue queue,
-				 *		TibrvMsgCallback callback,
-				 *		TibrvTransport transport,
-				 *		java.lang.String subject,
-				 *		java.lang.Object closure)
+				 * TibrvListener( TibrvQueue queue, TibrvMsgCallback callback,
+				 * TibrvTransport transport, java.lang.String subject,
+				 * java.lang.Object closure)
 				 */
 				new TibrvListener(Tibrv.defaultQueue(), this, transport, subject, null);
-				System.err.println("Listening on: " + subject);
+				System.out.println("Listening on: " + subject);
 			} catch (final TibrvException e) {
 				System.err.println("Failed to create listener:");
 				e.printStackTrace();
@@ -68,25 +35,7 @@ public class Listen implements TibrvMsgCallback {
 	}
 
 	public void dispatch() {
-		while (true) {
-			if (performDispatch) {
-				// dispatch Tibrv events
-				try {
-					// Wait max 0,5 sec, to listen on keyboard.
-					Tibrv.defaultQueue().timedDispatch(0.5d);
-				} catch (final TibrvException e) {
-					System.err.println("Exception dispatching default queue:");
-					e.printStackTrace();
-					System.exit(1);
-				} catch (final InterruptedException ie) {
-					System.exit(1);
-				}
-
-			} else {
-				// Dispatch is disabled, just idle
-				LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(500));
-			}
-		}
+		dispatch(Tibrv.defaultQueue());
 	}
 
 	@Override
@@ -100,25 +49,7 @@ public class Listen implements TibrvMsgCallback {
 		}
 	}
 
-	public void setPerformDispose() {
-		setPerformDispose(true);
-	}
-
-	public void setPerformDispose(final boolean performDispose) {
-		this.performDispose = performDispose;
-	}
-
-	public boolean isPerformDispatch() {
-		return performDispatch;
-	}
-
-	public void setPerformDispatch(final boolean performDispatch) {
-		this.performDispatch = performDispatch;
-	}
-
 	public static void main(final String args[]) {
-		// Debug.diplayEnvInfo();
-
 		final ArgParser argParser = new ArgParser("TibRvListen");
 		argParser.setOptionalParameter("service", "network", "daemon");
 		argParser.setRequiredArg("subject");
@@ -155,46 +86,4 @@ public class Listen implements TibrvMsgCallback {
 
 		listen.dispatch();
 	}
-
-	private void startKeyListener() {
-		printKeyUsage();
-
-		new Thread(() -> {
-			try (BufferedReader input = new BufferedReader(new InputStreamReader(System.in, "UTF-8"))) {
-				while (true) {
-					final char c = (char) input.read();
-
-					switch (c) {
-					case 'd':
-					case 'D':
-						System.out.println("Dispatcher is DISABLED");
-						setPerformDispatch(false);
-						break;
-
-					case 'e':
-					case 'E':
-						System.out.println("Dispatcher is ENABLED");
-						setPerformDispatch(true);
-						break;
-						
-					case '\r':
-					case '\n':
-						break;
-
-					default:
-						printKeyUsage();
-						break;
-					}
-
-				}
-			} catch (final IOException e) {
-				e.printStackTrace();
-			}
-		}).start();
-	}
-
-	private void printKeyUsage() {
-		System.out.println("Press\n\t\"D\" to disable Dispatcher\n\t\"E\" to enable Dispatcher ");
-	}
-
 }

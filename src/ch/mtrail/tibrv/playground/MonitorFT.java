@@ -10,20 +10,16 @@ public class MonitorFT extends Abstract implements TibrvFtMonitorCallback {
 	private double lostInterval = 4.8; // matches tibrvfttime
 	private static int oldNumActive = 0;
 
-	public MonitorFT(final String service, final String network, final String daemon, final String ftGroupName) {
+	public MonitorFT(final String service, final String network, final String daemon, final String ftGroupName)
+			throws TibrvException {
 		super(service, network, daemon);
 
 		// create listener using default queue
-		try {
-			new TibrvFtMonitor(Tibrv.defaultQueue(), this, transport, ftGroupName, lostInterval, null);
-			System.err.println("tibrvftmon: Waiting for group information... " + ftGroupName);
-		} catch (final TibrvException e) {
-			System.err.println("Failed to create listener:");
-			handleFatalError(e);
-		}
+		new TibrvFtMonitor(Tibrv.defaultQueue(), this, transport, ftGroupName, lostInterval, null);
+		System.err.println("tibrvftmon: Waiting for group information... " + ftGroupName);
 	}
 
-	public void dispatch() {
+	public void dispatch() throws TibrvException, InterruptedException {
 		dispatch(Tibrv.defaultQueue());
 	}
 
@@ -39,7 +35,7 @@ public class MonitorFT extends Abstract implements TibrvFtMonitorCallback {
 
 	}
 
-	public static void main(final String args[]) {
+	public static void main(final String args[]) throws Exception {
 		final ArgParser argParser = new ArgParser("TibRvListenFT");
 		argParser.setOptionalParameter("service", "network", "daemon", "groupName");
 		argParser.parse(args);

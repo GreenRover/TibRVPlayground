@@ -16,7 +16,6 @@ public class ErrorLogger implements TibrvMsgCallback {
 	public void onMsg(final TibrvListener listener, final TibrvMsg msg) {
 		System.err.println("#FEHLER# " + (new Date()).toString() + ": subject=" + msg.getSendSubject() + ", reply="
 				+ msg.getReplySubject() + ", message=" + msg.toString());
-		System.err.flush();
 
 		msg.dispose();
 	}

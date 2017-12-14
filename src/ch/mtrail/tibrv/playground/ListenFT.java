@@ -18,16 +18,12 @@ public class ListenFT extends Abstract implements TibrvMsgCallback {
 	// Wenn man dir nichts anderes sagt, bist du PASIVE
 	private int ftStatus = TibrvFtMember.DEACTIVATE;
 
-	public ListenFT(final String service, final String network, final String daemon, final String subject) {
+	public ListenFT(final String service, final String network, final String daemon, final String subject) throws TibrvException {
 		super(service, network, daemon);
 		
 		// create listener using default queue
-		try {
-			new TibrvListener(Tibrv.defaultQueue(), this, transport, subject, null);
-			System.err.println("Listening on: " + subject);
-		} catch (final TibrvException e) {
-			handleFatalError(e);
-		}
+		new TibrvListener(Tibrv.defaultQueue(), this, transport, subject, null);
+		System.err.println("Listening on: " + subject);
 
 		// FaultTolerance
 		final TibrvFtMemberCallback callback = new TibrvFtMemberCallback() {
@@ -35,7 +31,7 @@ public class ListenFT extends Abstract implements TibrvMsgCallback {
 			public void onFtAction(final TibrvFtMember member, final String groupName, final int action) {
 				ftStatus = action;
 				System.err.println(System.currentTimeMillis() + " " + groupName + " -> " + //
-						getFtStatus(action) + " [" + action + "]");
+				getFtStatus(action) + " [" + action + "]");
 			}
 		};
 
@@ -65,18 +61,14 @@ public class ListenFT extends Abstract implements TibrvMsgCallback {
 		 *   Object closure 
 		 * )
 		 */
-		try {
-			final int defaultWeight = 50;
-			final int activePrcocesses = 2;
-			ftMember = new TibrvFtMember(Tibrv.defaultQueue(), callback, transport, ftGroupName, defaultWeight, activePrcocesses, //
-					0.5, 0, 1.0, null);
-		} catch (final TibrvException e) {
-			System.err.println("Failed to create FT member:");
-			handleFatalError(e);
-		}
+		final int defaultWeight = 50;
+		final int activePrcocesses = 2;
+		ftMember = new TibrvFtMember(Tibrv.defaultQueue(), callback, transport, ftGroupName, defaultWeight,
+				activePrcocesses, //
+				0.5, 0, 1.0, null);
 	}
 
-	public void dispatch() {
+	public void dispatch() throws TibrvException, InterruptedException {
 		dispatch(Tibrv.defaultQueue());
 	}
 
@@ -84,7 +76,6 @@ public class ListenFT extends Abstract implements TibrvMsgCallback {
 	public void onMsg(final TibrvListener listener, final TibrvMsg msg) {
 		System.out.println((new Date()).toString() + " " + getFtStatus(ftStatus) + "(" + ftMember.getWeight() + "): " //
 				+ "subject=" + msg.getSendSubject() + ", message=" + msg.toString());
-		System.out.flush();
 
 		msg.dispose();
 	}
@@ -104,17 +95,12 @@ public class ListenFT extends Abstract implements TibrvMsgCallback {
 	}
 
 	@Override
-	protected void userHasEnteredANumber(final int number) {
-		try {
-			ftMember.setWeight(number);
-			System.out.println("Set weight to " + number);
-		} catch (TibrvException e) {
-			System.err.println("Exception to set ft weight:");
-			handleFatalError(e);
-		}
+	protected void userHasEnteredANumber(final int number) throws TibrvException {
+		ftMember.setWeight(number);
+		System.out.println("Set weight to " + number);
 	}
 
-	public static void main(final String args[]) {
+	public static void main(final String args[]) throws Exception {
 		// Debug.diplayEnvInfo();
 
 		final ArgParser argParser = new ArgParser("TibRvListenFT");

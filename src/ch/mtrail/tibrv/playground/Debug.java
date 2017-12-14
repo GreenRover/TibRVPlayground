@@ -32,7 +32,6 @@ public class Debug {
 		 * (envVars.get(var).equals(javaLibPath)) { System.out.println(var); } }
 		 */
 
-		System.out.flush();
 	}
 
 }

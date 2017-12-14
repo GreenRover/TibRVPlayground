@@ -28,21 +28,17 @@ public class ListenDQ_RCS extends Abstract {
 	private final static int threads = 5;
 	private TibrvCmQueueTransport dq;
 
-	public ListenDQ_RCS(final String service, final String network, final String daemon, final String subject) {
+	public ListenDQ_RCS(final String service, final String network, final String daemon, final String subject)
+			throws TibrvException {
 		super(service, network, daemon);
 
-		try {
-			queue = new TibrvQueue();
+		queue = new TibrvQueue();
 
-			dq = new TibrvCmQueueTransport(transport, dqGroupName);
-			dq.setWorkerTasks(rv_threads);
+		dq = new TibrvCmQueueTransport(transport, dqGroupName);
+		dq.setWorkerTasks(rv_threads);
 
-			new TibrvCmListener(queue, new RvDispatcher(syncQueue), dq, subject, null);
-			System.out.println("Listening on: " + subject);
-
-		} catch (final TibrvException e) {
-			handleFatalError(e);
-		}
+		new TibrvCmListener(queue, new RvDispatcher(syncQueue), dq, subject, null);
+		System.out.println("Listening on: " + subject);
 
 		// Init Thread to take msg from TbiRv and put them into syncQueue
 		// Will block if no one is polling the queue
@@ -59,17 +55,12 @@ public class ListenDQ_RCS extends Abstract {
 		}
 	}
 
-	public void printDebugInfo() {
+	public void printDebugInfo() throws TibrvException {
 		while (true) {
-			try {
 				System.out.println(
 						"QueueLength: " + queue.getCount() + " DQueueLength: " + dq.getUnassignedMessageCount());
-				System.out.flush();
 
 				LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(10));
-			} catch (final Exception e) {
-				e.printStackTrace();
-			}
 		}
 	}
 
@@ -90,7 +81,7 @@ public class ListenDQ_RCS extends Abstract {
 		}
 	}
 
-	public static void main(final String args[]) {
+	public static void main(final String args[]) throws Exception {
 		// Debug.diplayEnvInfo();
 
 		final ArgParser argParser = new ArgParser("TibRvListenFT");
@@ -122,7 +113,6 @@ public class ListenDQ_RCS extends Abstract {
 				System.out.println((new Date()).toString() + " " + Thread.currentThread().getName() + " TAKE  " //
 						+ "subject=" + msg.getSendSubject() + ", message=" + msg.toString() + ", seqno="
 						+ TibrvCmMsg.getSequence(msg));
-				System.out.flush();
 
 				syncQueue.put(msg);
 
@@ -164,14 +154,12 @@ public class ListenDQ_RCS extends Abstract {
 			System.out.println((new Date()).toString() + " " + Thread.currentThread().getName() + " START " //
 					+ "subject=" + msg.getSendSubject() + ", message=" + msg.toString() + ", seqno="
 					+ TibrvCmMsg.getSequence(msg));
-			System.out.flush();
 
 			LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(2));
 
 			msg.dispose();
 
 			System.out.println((new Date()).toString() + " " + Thread.currentThread().getName() + " FINISHED");
-			System.out.flush();
 		}
 
 		public void setRun(final boolean run) {

@@ -15,42 +15,38 @@ public class ListenMultiQueue extends Abstract implements TibrvMsgCallback {
 
 	private TibrvQueueGroup group;
 
-	public ListenMultiQueue(final String service, final String network, final String daemon,
-			final String subjectPrefix) {
+	public ListenMultiQueue(final String service, final String network, final String daemon, final String subjectPrefix)
+			throws TibrvException {
 		super(service, network, daemon);
 
-		try {
-			// create two queues
-			final TibrvQueue queue1 = new TibrvQueue();
-			final TibrvQueue queue2 = new TibrvQueue();
+		// create two queues
+		final TibrvQueue queue1 = new TibrvQueue();
+		final TibrvQueue queue2 = new TibrvQueue();
 
-			// set priorities
-			queue1.setPriority(10);
-			queue2.setPriority(2);
+		// set priorities
+		queue1.setPriority(10);
+		queue2.setPriority(2);
 
-			final int limitPolicy = TibrvQueue.DISCARD_FIRST;
-			final int maxEvents = 1000;
-			final int discardAmount = 25;
-			queue2.setLimitPolicy(limitPolicy, maxEvents, discardAmount);
+		final int limitPolicy = TibrvQueue.DISCARD_FIRST;
+		final int maxEvents = 1000;
+		final int discardAmount = 25;
+		queue2.setLimitPolicy(limitPolicy, maxEvents, discardAmount);
 
-			group = new TibrvQueueGroup();
-			group.add(queue1);
-			group.add(queue2);
+		group = new TibrvQueueGroup();
+		group.add(queue1);
+		group.add(queue2);
 
-			// Create listeners
-			new TibrvListener(queue1, this, transport, subjectPrefix + ".COMMAND.>", null);
-			new TibrvListener(queue2, this, transport, subjectPrefix + ".VIDEO_STREAM.>", null);
-			System.out.println("Listening on: " + subjectPrefix + ".COMMAND.>  with prio: " + queue1.getPriority());
-			System.out.println("Listening on: " + subjectPrefix + ".VIDEO_STREAM.> with prio: " + queue2.getPriority());
+		// Create listeners
+		new TibrvListener(queue1, this, transport, subjectPrefix + ".COMMAND.>", null);
+		new TibrvListener(queue2, this, transport, subjectPrefix + ".VIDEO_STREAM.>", null);
+		System.out.println("Listening on: " + subjectPrefix + ".COMMAND.>  with prio: " + queue1.getPriority());
+		System.out.println("Listening on: " + subjectPrefix + ".VIDEO_STREAM.> with prio: " + queue2.getPriority());
 
-			// Create error listener
-			group.add(createErrorHandler());
-		} catch (final TibrvException e) {
-			handleFatalError(e);
-		}
+		// Create error listener
+		group.add(createErrorHandler());
 	}
 
-	public void dispatch() {
+	public void dispatch() throws TibrvException, InterruptedException {
 		dispatch(group);
 	}
 
@@ -58,10 +54,9 @@ public class ListenMultiQueue extends Abstract implements TibrvMsgCallback {
 	public void onMsg(final TibrvListener listener, final TibrvMsg msg) {
 		System.out.println((new Date()).toString() + ": subject=" + msg.getSendSubject() + ", reply="
 				+ msg.getReplySubject() + ", message=" + msg.toString());
-		System.out.flush();
 
 		LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(500));
-		
+
 		if (msg.getReplySubject() != null) {
 			// Send reply msg if a request subject is set.
 			try {
@@ -81,7 +76,7 @@ public class ListenMultiQueue extends Abstract implements TibrvMsgCallback {
 		}
 	}
 
-	public static void main(final String args[]) {
+	public static void main(final String args[]) throws Exception {
 		// Debug.diplayEnvInfo();
 
 		final ArgParser argParser = new ArgParser("ListenMultiQueue ");

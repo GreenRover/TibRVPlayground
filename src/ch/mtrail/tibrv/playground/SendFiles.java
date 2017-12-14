@@ -17,14 +17,15 @@ public class SendFiles extends Abstract {
 	private final String subject;
 	private final static short fileTimeType = TibrvMsg.USER_FIRST + 1;
 
-	public SendFiles(final String service, final String network, final String daemon, final String subject) {
+	public SendFiles(final String service, final String network, final String daemon, final String subject)
+			throws TibrvException {
 		super(service, network, daemon);
 		this.subject = subject;
 
 		try {
 			final FileTimeEncoder fileTimeEncoder = new FileTimeEncoder();
 			TibrvMsg.setHandlers(fileTimeType, fileTimeEncoder, fileTimeEncoder);
-			
+
 			// Create error listener
 			final TibrvQueueGroup group = new TibrvQueueGroup();
 			group.add(createErrorHandler());
@@ -69,7 +70,7 @@ public class SendFiles extends Abstract {
 		msg.dispose();
 	}
 
-	public static void main(final String args[]) {
+	public static void main(final String args[]) throws Exception {
 		final ArgParser argParser = new ArgParser("SendFiles");
 		argParser.setOptionalParameter("service", "network", "daemon");
 		argParser.setRequiredParameter("folder");
@@ -82,22 +83,18 @@ public class SendFiles extends Abstract {
 				argParser.getParameter("daemon"), //
 				argParser.getArgument("subject"));
 
-		try {
-			final Path path = Paths.get(argParser.getParameter("folder"));
-			try (DirectoryStream<Path> ds = Files.newDirectoryStream(path)) {
-				for (final Path child : ds) {
-					if (Files.isRegularFile(child)) {
-						sender.send(child);
-						System.out.println("Submitted: " + child);
-					}
+		final Path path = Paths.get(argParser.getParameter("folder"));
+		try (DirectoryStream<Path> ds = Files.newDirectoryStream(path)) {
+			for (final Path child : ds) {
+				if (Files.isRegularFile(child)) {
+					sender.send(child);
+					System.out.println("Submitted: " + child);
 				}
 			}
-			
-			System.out.println("DONE");
-			sender.shutdown();
-		} catch (final TibrvException | IOException e) {
-			e.printStackTrace();
 		}
+
+		System.out.println("DONE");
+		sender.shutdown();
 
 	}
 

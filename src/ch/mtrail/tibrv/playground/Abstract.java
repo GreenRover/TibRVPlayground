@@ -24,25 +24,13 @@ public class Abstract {
 	protected boolean performDispatch = true;
 	protected boolean performDispose = false;
 
-	public Abstract(final String service, final String network, final String daemon) {
+	public Abstract(final String service, final String network, final String daemon) throws TibrvException {
 		// open Tibrv in native implementation
-		try {
-			Tibrv.open(Tibrv.IMPL_NATIVE);
-		} catch (
+		Tibrv.open(Tibrv.IMPL_NATIVE);
 
-		final TibrvException e) {
-			System.err.println("Failed to open Tibrv in native implementation:");
-			handleFatalError(e);
-		}
-
-		try {
-			transport = new TibrvRvdTransport(service, network, daemon);
-		} catch (final TibrvException e) {
-			System.err.println("Failed to create TibrvRvdTransport:");
-			handleFatalError(e);
-		}
+		transport = new TibrvRvdTransport(service, network, daemon);
 	}
-	
+
 	public void shutdown() {
 		listeners.forEach(listener -> {
 			listener.destroy();
@@ -53,19 +41,12 @@ public class Abstract {
 		transport.destroy();
 	}
 
-	protected void dispatch(final TibrvDispatchable dispatchable) {
+	protected void dispatch(final TibrvDispatchable dispatchable) throws TibrvException, InterruptedException {
 		while (true) {
 			if (performDispatch) {
 				// dispatch Tibrv events
-				try {
-					// Wait max 0.5 sec, to listen on keyboard.
-					dispatchable.timedDispatch(0.5);
-				} catch (final TibrvException e) {
-					System.err.println("Exception dispatching default queue:");
-					handleFatalError(e);
-				} catch (final InterruptedException ie) {
-					System.exit(1);
-				}
+				// Wait max 0.5 sec, to listen on keyboard.
+				dispatchable.timedDispatch(0.5);
 
 			} else {
 				// Dispatch is disabled, just idle
@@ -119,7 +100,7 @@ public class Abstract {
 						if (line.matches("^\\d+$")) {
 							try {
 								userHasEnteredANumber(Integer.parseInt(line));
-							} catch (final NumberFormatException e) {
+							} catch (final Exception e) {
 								System.err.println("Unexpected error");
 								e.printStackTrace();
 							}
@@ -136,8 +117,8 @@ public class Abstract {
 			}
 		}).start();
 	}
-	
-	protected void userHasEnteredANumber(final int number) {
+
+	protected void userHasEnteredANumber(final int number) throws TibrvException {
 		// Can be implemented.
 	}
 
@@ -145,25 +126,14 @@ public class Abstract {
 		System.out.println("Press\n\t\"D\" to disable Dispatcher\n\t\"E\" to enable Dispatcher ");
 	}
 
-	protected TibrvQueue createErrorHandler() {
-		try {
-			// Create error listener
-			final TibrvQueue errorQueue = new TibrvQueue();
-			final ErrorLogger errorLogger = new ErrorLogger();
-			listeners.add(new TibrvListener(errorQueue, errorLogger, transport, "_RV.ERROR.>", null));
-			listeners.add(new TibrvListener(errorQueue, errorLogger, transport, "_RV.WARN.>", null));
+	protected TibrvQueue createErrorHandler() throws TibrvException {
+		// Create error listener
+		final TibrvQueue errorQueue = new TibrvQueue();
+		final ErrorLogger errorLogger = new ErrorLogger();
+		listeners.add(new TibrvListener(errorQueue, errorLogger, transport, "_RV.ERROR.>", null));
+		listeners.add(new TibrvListener(errorQueue, errorLogger, transport, "_RV.WARN.>", null));
 
-			return errorQueue;
-		} catch (final TibrvException e) {
-			handleFatalError(e);
-		}
+		return errorQueue;
+	}
 
-		return null;
-	}
-	
-	protected void handleFatalError(final Exception e) {
-		System.out.println(e.getMessage());
-		e.printStackTrace();
-		System.exit(1);
-	}
 }

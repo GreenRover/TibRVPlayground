@@ -24,36 +24,32 @@ public class ListenDQ extends Abstract implements TibrvMsgCallback {
 	private final static int threads = 5;
 	private TibrvCmQueueTransport dq;
 
-	public ListenDQ(final String service, final String network, final String daemon, final String subject) {
+	public ListenDQ(final String service, final String network, final String daemon, final String subject)
+			throws TibrvException {
 		super(service, network, daemon);
-		
-		try {
-			queue = new TibrvQueue();
-			
-			/**
-			 * TibrvCmQueueTransport(
-			 *  TibrvRvdTransport transport,
-			 *  java.lang.String cmName,
-			 *  int workerWeight,
-			 *  int workerTasks,
-			 *  int schedulerWeight,
-			 *  double schedulerHeartbeat,   
-			 *          The scheduler sends heartbeat messages at this interval (in seconds).
-			 *  double schedulerActivation   
-			 *          When the heartbeat signal from the scheduler has been silent for this
-			 *          interval (in seconds), the cooperating member with the greatest
-			 *          scheduler weight takes its place as the new scheduler.
-			 * )
-			 */
-			dq = new TibrvCmQueueTransport(transport, dqGroupName);
-			dq.setWorkerTasks(threads);
 
-			new TibrvCmListener(queue, this, dq, subject, null);
-			System.out.println("Listening on: " + subject);
+		queue = new TibrvQueue();
 
-		} catch (final TibrvException e) {
-			handleFatalError(e);
-		}
+		/**
+		 * TibrvCmQueueTransport(
+		 *  TibrvRvdTransport transport,
+		 *  java.lang.String cmName,
+		 *  int workerWeight,
+		 *  int workerTasks,
+		 *  int schedulerWeight,
+		 *  double schedulerHeartbeat,   
+		 *          The scheduler sends heartbeat messages at this interval (in seconds).
+		 *  double schedulerActivation   
+		 *          When the heartbeat signal from the scheduler has been silent for this
+		 *          interval (in seconds), the cooperating member with the greatest
+		 *          scheduler weight takes its place as the new scheduler.
+		 * )
+		 */
+		dq = new TibrvCmQueueTransport(transport, dqGroupName);
+		dq.setWorkerTasks(threads);
+
+		new TibrvCmListener(queue, this, dq, subject, null);
+		System.out.println("Listening on: " + subject);
 
 		for (int i = 0; i <= threads; i++) {
 			final RvDispatcher dispatcher = new RvDispatcher(queue);
@@ -63,17 +59,12 @@ public class ListenDQ extends Abstract implements TibrvMsgCallback {
 		}
 	}
 
-	public void printDebugInfos() {
+	public void printDebugInfos() throws TibrvException {
 		while (true) {
-			try {
 				System.out.println(
 						"QueueLength: " + queue.getCount() + " DQueueLength: " + dq.getUnassignedMessageCount());
-				System.out.flush();
 
 				LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(10));
-			} catch (final Exception e) {
-				e.printStackTrace();
-			}
 		}
 	}
 
@@ -88,14 +79,12 @@ public class ListenDQ extends Abstract implements TibrvMsgCallback {
 
 		System.out.println((new Date()).toString() + " " + Thread.currentThread().getName() + " START " //
 				+ "subject=" + msg.getSendSubject() + ", message=" + msg.toString() + ", seqno=" + seqno);
-		System.out.flush();
 
 		msg.dispose();
 
 		LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(2));
 
 		System.out.println((new Date()).toString() + " " + Thread.currentThread().getName() + " FINISHED");
-		System.out.flush();
 	}
 
 	@Override
@@ -105,7 +94,7 @@ public class ListenDQ extends Abstract implements TibrvMsgCallback {
 		});
 	}
 
-	public static void main(final String args[]) {
+	public static void main(final String args[]) throws Exception {
 		// Debug.diplayEnvInfo();
 
 		final ArgParser argParser = new ArgParser("TibRvListenFT");
@@ -125,38 +114,34 @@ public class ListenDQ extends Abstract implements TibrvMsgCallback {
 	}
 
 	class RvDispatcher implements Runnable {
-		
+
 		private boolean performDispatch = true;
 		private final TibrvQueue queue;
-		
+
 		public RvDispatcher(final TibrvQueue queue) {
 			this.queue = queue;
 		}
-		
+
 		@Override
 		public void run() {
-			while (true) {
-				if (performDispatch) {
-					// dispatch Tibrv events
-					try {
+			try {
+				while (true) {
+					if (performDispatch) {
+						// dispatch Tibrv events
 						// Wait max 0.5 sec, to listen on keyboard.
 						queue.timedDispatch(0.5d);
-					} catch (final TibrvException e) {
-						handleFatalError(e);
-					} catch (final InterruptedException ie) {
-						System.exit(1);
+					} else {
+						// Dispatch is disabled, just idle
+						LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(500));
 					}
-					
-				} else {
-					// Dispatch is disabled, just idle
-					LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(500));
 				}
+			} catch (final Exception e) {
+				e.printStackTrace();
 			}
 		}
-		
+
 		public void setRun(final boolean performDispatch) {
 			this.performDispatch = performDispatch;
 		}
 	}
 }
-

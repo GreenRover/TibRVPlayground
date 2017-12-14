@@ -1,7 +1,7 @@
 package ch.mtrail.tibrv.playground;
 
+import java.io.IOException;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
@@ -21,29 +21,22 @@ public class ListenCM extends Abstract implements TibrvMsgCallback {
 	private TibrvCmListener cmListener = null;
 	private TibrvCmTransport cmTransport = null;
 
-	public ListenCM(final String service, final String network, final String daemon, final String subject) {
+	public ListenCM(final String service, final String network, final String daemon, final String subject)
+			throws TibrvException, IOException {
 		super(service, network, daemon);
-		
-		try {
-			cmname = "MyProgrammAndTheTaskItDoesIdentification__ListenCM_" + InetAddress.getLocalHost().getHostName();
-		} catch (final UnknownHostException e) {
-			handleFatalError(e);
-		}
 
-		try {
-			cmTransport = new TibrvCmTransport(transport, cmname, true);
+		cmname = "MyProgrammAndTheTaskItDoesIdentification__ListenCM_" + InetAddress.getLocalHost().getHostName();
 
-			cmListener = new TibrvCmListener(Tibrv.defaultQueue(), this, cmTransport, subject, null);
-			System.out.println("Listening on: " + subject);
+		cmTransport = new TibrvCmTransport(transport, cmname, true);
 
-			// Set explicit confirmation
-			cmListener.setExplicitConfirm();
-		} catch (final TibrvException e) {
-			handleFatalError(e);
-		}
+		cmListener = new TibrvCmListener(Tibrv.defaultQueue(), this, cmTransport, subject, null);
+		System.out.println("Listening on: " + subject);
+
+		// Set explicit confirmation
+		cmListener.setExplicitConfirm();
 	}
 
-	public void dispatch() {
+	public void dispatch() throws TibrvException, InterruptedException {
 		dispatch(Tibrv.defaultQueue());
 	}
 
@@ -52,7 +45,6 @@ public class ListenCM extends Abstract implements TibrvMsgCallback {
 		try {
 			System.out.println((new Date()).toString() + ": subject=" + msg.getSendSubject() + ", reply="
 					+ msg.getReplySubject() + ", message=" + msg.toString());
-			System.out.flush();
 
 			// Report we are confirming message
 			final long seqno = TibrvCmMsg.getSequence(msg);
@@ -76,7 +68,7 @@ public class ListenCM extends Abstract implements TibrvMsgCallback {
 		}
 	}
 
-	public static void main(final String args[]) {
+	public static void main(final String args[]) throws Exception {
 		// Debug.diplayEnvInfo();
 
 		final ArgParser argParser = new ArgParser("TibRvListenCM");

@@ -17,22 +17,17 @@ public class ListenThreadJavaA extends Abstract implements TibrvMsgCallback {
 
 	private TibrvQueueGroup group;
 
-	public ListenThreadJavaA(final String service, final String network, final String daemon, final String subject) {
+	public ListenThreadJavaA(final String service, final String network, final String daemon, final String subject)
+			throws TibrvException {
 		super(service, network, daemon);
 
-		try {
-			group = new TibrvQueueGroup();
-			final TibrvQueue queue = new TibrvQueue();
-			new TibrvListener(queue, this, transport, subject, null);
-			group.add(queue);
+		group = new TibrvQueueGroup();
+		final TibrvQueue queue = new TibrvQueue();
+		new TibrvListener(queue, this, transport, subject, null);
+		group.add(queue);
 
-			// Create error listener
-			group.add(createErrorHandler());
-		} catch (final TibrvException e) {
-			System.err.println("Failed to create listener:");
-			e.printStackTrace();
-			System.exit(1);
-		}
+		// Create error listener
+		group.add(createErrorHandler());
 	}
 
 	public void dispatch(final int threads) {
@@ -46,7 +41,7 @@ public class ListenThreadJavaA extends Abstract implements TibrvMsgCallback {
 						System.err.println("Exception dispatching default queue:");
 						e.printStackTrace();
 					}
-					
+
 					// IF shutdown == exit
 				}
 			});
@@ -56,16 +51,16 @@ public class ListenThreadJavaA extends Abstract implements TibrvMsgCallback {
 
 	@Override
 	public void onMsg(final TibrvListener listener, final TibrvMsg msg) {
-		System.out.println((new Date()).toString() + ": subject=" + msg.getSendSubject() + ", reply="
-				+ msg.getReplySubject() + ", message=" + msg.toString() + " THREAD: " + Thread.currentThread().getName());
-		System.out.flush();
-		
+		System.out.println(
+				(new Date()).toString() + ": subject=" + msg.getSendSubject() + ", reply=" + msg.getReplySubject()
+						+ ", message=" + msg.toString() + " THREAD: " + Thread.currentThread().getName());
+
 		msg.dispose();
-		
+
 		LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(500));
 	}
 
-	public static void main(final String args[]) {
+	public static void main(final String args[]) throws Exception {
 		final ArgParser argParser = new ArgParser("ListenThreadJavaA");
 		argParser.setRequiredParameter("threads");
 		argParser.setOptionalParameter("service", "network", "daemon");
@@ -76,9 +71,8 @@ public class ListenThreadJavaA extends Abstract implements TibrvMsgCallback {
 				argParser.getParameter("service"), //
 				argParser.getParameter("network"), //
 				argParser.getParameter("daemon"), //
-				argParser.getArgument("subject")
-				);
+				argParser.getArgument("subject"));
 
 		listen.dispatch(Integer.parseInt(argParser.getParameter("threads")));
-	}	
+	}
 }

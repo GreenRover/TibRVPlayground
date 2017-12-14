@@ -19,40 +19,33 @@ public class ListenThreadJavaB extends Abstract implements TibrvMsgCallback {
 	private final ExecutorService threadPool;
 
 	public ListenThreadJavaB(final String service, final String network, final String daemon, final String subject,
-			final int threads) {
+			final int threads) throws TibrvException {
 		super(service, network, daemon);
 
 		threadPool = Executors.newFixedThreadPool(threads);
 
-		try {
-			group = new TibrvQueueGroup();
-			final TibrvQueue queue = new TibrvQueue();
-			new TibrvListener(queue, this, transport, subject, null);
-			group.add(queue);
+		group = new TibrvQueueGroup();
+		final TibrvQueue queue = new TibrvQueue();
+		new TibrvListener(queue, this, transport, subject, null);
+		group.add(queue);
 
-			// Create error listener
-			group.add(createErrorHandler());
-		} catch (final TibrvException e) {
-			System.err.println("Failed to create listener:");
-			e.printStackTrace();
-			System.exit(1);
-		}
+		// Create error listener
+		group.add(createErrorHandler());
 	}
 
-	public void dispatch() {
+	public void dispatch() throws TibrvException, InterruptedException {
 		dispatch(group);
 	}
 
 	@Override
 	public void onMsg(final TibrvListener listener, final TibrvMsg msg) {
 		System.out.println((new Date()).toString() + ": take THREAD: " + Thread.currentThread().getName());
-		System.out.flush();
-		
+
 		// System.out.println("onMsg");
 		threadPool.execute(() -> {
-			System.out.println((new Date()).toString() + ": subject=" + msg.getSendSubject() + ", reply="
-					+ msg.getReplySubject() + ", message=" + msg.toString() + " THREAD: " + Thread.currentThread().getName());
-			System.out.flush();
+			System.out.println(
+					(new Date()).toString() + ": subject=" + msg.getSendSubject() + ", reply=" + msg.getReplySubject()
+							+ ", message=" + msg.toString() + " THREAD: " + Thread.currentThread().getName());
 
 			LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(500));
 
@@ -60,7 +53,7 @@ public class ListenThreadJavaB extends Abstract implements TibrvMsgCallback {
 		});
 	}
 
-	public static void main(final String args[]) {
+	public static void main(final String args[]) throws Exception {
 		final ArgParser argParser = new ArgParser("ListenThreadJavaB ");
 		argParser.setRequiredParameter("threads");
 		argParser.setOptionalParameter("service", "network", "daemon");

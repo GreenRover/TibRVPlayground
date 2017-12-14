@@ -1,7 +1,7 @@
 package ch.mtrail.tibrv.playground;
 
+import java.io.IOException;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -24,22 +24,18 @@ public class SendCM extends Abstract implements TibrvMsgCallback {
 	private static final String confirmAdvisorySubject = "_RV.INFO.RVCM.DELIVERY.CONFIRM.>";
 	private int msgCount = 0;
 
-	public SendCM(final String service, final String network, final String daemon, final String subject) {
+	public SendCM(final String service, final String network, final String daemon, final String subject)
+			throws TibrvException, IOException {
 		super(service, network, daemon);
 		this.subject = subject;
-		
-		try {
-			cmname = "MyProgrammAndTheTaskItDoesIdentification__SendCM_" + InetAddress.getLocalHost().getHostName();
 
-			cmTransport = new TibrvCmTransport(transport, cmname, true);
+		cmname = "MyProgrammAndTheTaskItDoesIdentification__SendCM_" + InetAddress.getLocalHost().getHostName();
 
-			// Create listener for delivery confirmation advisory messages
-			new TibrvListener(Tibrv.defaultQueue(), this, transport, confirmAdvisorySubject, null);
-			new TibrvDispatcher(Tibrv.defaultQueue());
+		cmTransport = new TibrvCmTransport(transport, cmname, true);
 
-		} catch (final TibrvException | UnknownHostException e) {
-			handleFatalError(e);
-		}
+		// Create listener for delivery confirmation advisory messages
+		new TibrvListener(Tibrv.defaultQueue(), this, transport, confirmAdvisorySubject, null);
+		new TibrvDispatcher(Tibrv.defaultQueue());
 	}
 
 	@Override
@@ -47,7 +43,6 @@ public class SendCM extends Abstract implements TibrvMsgCallback {
 		try {
 			final long seqno = msg.getAsLong("seqno", 0);
 			System.out.println((new Date()).toString() + " RECEIVED: seqno=" + seqno + " message=  " + msg.toString());
-			System.out.flush();
 		} catch (final TibrvException e) {
 			System.out.println(
 					"Exception occurred while getting \"seqno\" field from DELIVERY.CONFIRM advisory message:");
@@ -57,33 +52,28 @@ public class SendCM extends Abstract implements TibrvMsgCallback {
 	}
 
 	public void send(final String msgString) throws TibrvException {
-		try {
-			// Create the message
-			final TibrvMsg msg = new TibrvMsg();
-			
-			msg.setSendSubject(subject);
-			
-			msg.add("DATA", msgString);
-			msg.add("INDEX", msgCount);
-			
-			// Msg must be delivered within 5sec
-			TibrvCmMsg.setTimeLimit(msg, 5.0);
-			
-			// Send message into the queue
-			cmTransport.send(msg);
-			
-			System.out.println(
-					(new Date()).toString() + " SEND: subject=" + msg.getSendSubject() + ", message=" + msg.toString());
-			
-			msg.dispose();
-			msgCount++;
-			
-		} catch (final TibrvException e) {
-			handleFatalError(e);
-		}
+		// Create the message
+		final TibrvMsg msg = new TibrvMsg();
+
+		msg.setSendSubject(subject);
+
+		msg.add("DATA", msgString);
+		msg.add("INDEX", msgCount);
+
+		// Msg must be delivered within 5sec
+		TibrvCmMsg.setTimeLimit(msg, 5.0);
+
+		// Send message into the queue
+		cmTransport.send(msg);
+
+		System.out.println(
+				(new Date()).toString() + " SEND: subject=" + msg.getSendSubject() + ", message=" + msg.toString());
+
+		msg.dispose();
+		msgCount++;
 	}
-	
-	public static void main(final String args[]) {
+
+	public static void main(final String args[]) throws Exception {
 		// Debug.diplayEnvInfo();
 
 		final ArgParser argParser = new ArgParser("SendCM");
@@ -98,28 +88,22 @@ public class SendCM extends Abstract implements TibrvMsgCallback {
 				argParser.getParameter("daemon"), //
 				argParser.getArgument("subject"));
 
-		
-		
-		try {
-			sender.send(argParser.getArgument("msg"));
-			System.out.println("Submitted: " + argParser.getArgument("msg"));
+		sender.send(argParser.getArgument("msg"));
+		System.out.println("Submitted: " + argParser.getArgument("msg"));
 
-			final String intervalStr = argParser.getParameter("interval");
-			if (Objects.nonNull(intervalStr) && !intervalStr.isEmpty()) {
-				final int intervalMs = Integer.parseInt(intervalStr);
-				while (true) {
-					if (intervalMs > 0) {
-						// -interval 0 == hard core stress test
-						TimeUnit.MILLISECONDS.sleep(intervalMs);
-					}
-					sender.send(argParser.getArgument("msg"));
+		final String intervalStr = argParser.getParameter("interval");
+		if (Objects.nonNull(intervalStr) && !intervalStr.isEmpty()) {
+			final int intervalMs = Integer.parseInt(intervalStr);
+			while (true) {
+				if (intervalMs > 0) {
+					// -interval 0 == hard core stress test
+					TimeUnit.MILLISECONDS.sleep(intervalMs);
 				}
+				sender.send(argParser.getArgument("msg"));
 			}
-			
-			Tibrv.close();
-		} catch (TibrvException | InterruptedException e) {
-			e.printStackTrace();
 		}
+
+		Tibrv.close();
 	}
 
 }

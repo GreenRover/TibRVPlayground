@@ -13,28 +13,23 @@ import com.tibco.tibrv.TibrvMsgCallback;
 
 public class Listen extends Abstract implements TibrvMsgCallback {
 
-	public Listen(final String service, final String network, final String daemon, final List<String> subjects) {
+	public Listen(final String service, final String network, final String daemon, final List<String> subjects)
+			throws TibrvException {
 		super(service, network, daemon);
 
 		for (final String subject : subjects) {
 			// create listener using default queue
-			try {
-				/**
-				 * TibrvListener( TibrvQueue queue, TibrvMsgCallback callback,
-				 * TibrvTransport transport, java.lang.String subject,
-				 * java.lang.Object closure)
-				 */
-				new TibrvListener(Tibrv.defaultQueue(), this, transport, subject, null);
-				System.out.println("Listening on: " + subject);
-			} catch (final TibrvException e) {
-				System.err.println("Failed to create listener:");
-				e.printStackTrace();
-				System.exit(1);
-			}
+			/**
+			 * TibrvListener( TibrvQueue queue, TibrvMsgCallback callback,
+			 * TibrvTransport transport, java.lang.String subject,
+			 * java.lang.Object closure)
+			 */
+			new TibrvListener(Tibrv.defaultQueue(), this, transport, subject, null);
+			System.out.println("Listening on: " + subject);
 		}
 	}
 
-	public void dispatch() {
+	public void dispatch() throws TibrvException, InterruptedException {
 		dispatch(Tibrv.defaultQueue());
 	}
 
@@ -42,14 +37,13 @@ public class Listen extends Abstract implements TibrvMsgCallback {
 	public void onMsg(final TibrvListener listener, final TibrvMsg msg) {
 		System.out.println((new Date()).toString() + ": subject=" + msg.getSendSubject() + ", reply="
 				+ msg.getReplySubject() + ", message=" + msg.toString());
-		System.out.flush();
 
 		if (performDispose) {
 			msg.dispose();
 		}
 	}
 
-	public static void main(final String args[]) {
+	public static void main(final String args[]) throws Exception {
 		final ArgParser argParser = new ArgParser("TibRvListen");
 		argParser.setOptionalParameter("service", "network", "daemon");
 		argParser.setRequiredArg("subject");
@@ -58,18 +52,13 @@ public class Listen extends Abstract implements TibrvMsgCallback {
 		argParser.parse(args);
 
 		final List<String> subjects = new ArrayList<>();
-		try {
-			subjects.add(argParser.getArgument("subject"));
+		subjects.add(argParser.getArgument("subject"));
 
-			for (int i = 1; i <= 3; i++) {
-				final String addSubject = argParser.getArgument("addtional-subject" + i);
-				if (Objects.nonNull(addSubject)) {
-					subjects.add(addSubject);
-				}
+		for (int i = 1; i <= 3; i++) {
+			final String addSubject = argParser.getArgument("addtional-subject" + i);
+			if (Objects.nonNull(addSubject)) {
+				subjects.add(addSubject);
 			}
-		} catch (final Exception e) {
-			e.printStackTrace();
-			System.exit(-1);
 		}
 
 		final Listen listen = new Listen(//

@@ -19,26 +19,22 @@ public class ListenFiles extends Abstract implements TibrvMsgCallback {
 	private final static short fileTimeType = TibrvMsg.USER_FIRST + 1;
 
 	public ListenFiles(final String service, final String network, final String daemon, final String subject,
-			final String folder) {
+			final String folder) throws TibrvException {
 		super(service, network, daemon);
-		
-		try {
-			final FileTimeEncoder fileTimeEncoder = new FileTimeEncoder();
-			TibrvMsg.setHandlers(fileTimeType, fileTimeEncoder, fileTimeEncoder);
-			
-			if (folder != null && !folder.isEmpty()) {
-				this.dstFolder = Paths.get(folder);
-			}
-	
-			// create listener using default queue
-			new TibrvListener(Tibrv.defaultQueue(), this, transport, subject, null);
-			System.out.println("Listening on: " + subject);
-		} catch (final TibrvException e) {
-			handleFatalError(e);
+
+		final FileTimeEncoder fileTimeEncoder = new FileTimeEncoder();
+		TibrvMsg.setHandlers(fileTimeType, fileTimeEncoder, fileTimeEncoder);
+
+		if (folder != null && !folder.isEmpty()) {
+			this.dstFolder = Paths.get(folder);
 		}
+
+		// create listener using default queue
+		new TibrvListener(Tibrv.defaultQueue(), this, transport, subject, null);
+		System.out.println("Listening on: " + subject);
 	}
-	
-	public void dispatch() {
+
+	public void dispatch() throws TibrvException, InterruptedException {
 		dispatch(Tibrv.defaultQueue());
 	}
 
@@ -48,22 +44,16 @@ public class ListenFiles extends Abstract implements TibrvMsgCallback {
 			System.out.println((new Date()).toString() + //
 					": subject=" + msg.getSendSubject() + //
 					", filename=" + msg.get("FILENAME") + //
-					", size=" + msg.get("SIZE") + // 
-					", mime=" + ((TibrvMsg)msg.get("META")).get("mimeType") + //
-					", creationTime=" + ((TibrvMsg)msg.get("META")).get("creationTime")
-					);
-			System.out.flush();
+					", size=" + msg.get("SIZE") + //
+					", mime=" + ((TibrvMsg) msg.get("META")).get("mimeType") + //
+					", creationTime=" + ((TibrvMsg) msg.get("META")).get("creationTime"));
 
 			if (dstFolder != null) {
-				try {
-					storeFile(msg);
-				} catch (final IOException e) {
-					e.printStackTrace();
-				}
+				storeFile(msg);
 			}
 
-		} catch (final TibrvException e) {
-			handleFatalError(e);
+		} catch (final Exception e) {
+			e.printStackTrace();
 		}
 
 		if (performDispose) {
@@ -79,11 +69,12 @@ public class ListenFiles extends Abstract implements TibrvMsgCallback {
 		Files.write(file.toPath(), content);
 	}
 
-	public static void main(final String args[]) {
+	public static void main(final String args[]) throws Exception {
 		// Debug.diplayEnvInfo();
 
 		final ArgParser argParser = new ArgParser("TibRvListen");
-		// If folder is not set, we perform a dry run and just print out what we received.
+		// If folder is not set, we perform a dry run and just print out what we
+		// received.
 		argParser.setOptionalParameter("service", "network", "daemon", "folder");
 		argParser.setRequiredArg("subject");
 		argParser.setFlags("perform-dispose");
@@ -99,7 +90,7 @@ public class ListenFiles extends Abstract implements TibrvMsgCallback {
 		if (argParser.isFlagSet("perform-dispose")) {
 			listen.setPerformDispose();
 		}
-		
+
 		listen.dispatch();
 	}
 

@@ -61,7 +61,7 @@ public class SendCM extends Abstract implements TibrvMsgCallback {
 		msg.add("INDEX", msgCount);
 
 		// Msg must be delivered within 5sec
-		TibrvCmMsg.setTimeLimit(msg, 5.0);
+		TibrvCmMsg.setTimeLimit(msg, 5000.0);
 
 		// Send message into the queue
 		cmTransport.send(msg);

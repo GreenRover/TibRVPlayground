@@ -3,8 +3,6 @@ package ch.mtrail.tibrv.playground;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
 
 import com.tibco.tibrv.Tibrv;
 import com.tibco.tibrv.TibrvCmListener;
@@ -50,7 +48,7 @@ public class ListenCM extends Abstract implements TibrvMsgCallback {
 			final long seqno = TibrvCmMsg.getSequence(msg);
 
 			// do some work.
-			LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(500));
+			//LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(500));
 
 			// If it was not CM message or very first message
 			// we'll get seqno=0. Only confirm if seqno > 0.

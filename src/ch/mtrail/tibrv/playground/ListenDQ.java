@@ -21,7 +21,7 @@ public class ListenDQ extends Abstract implements TibrvMsgCallback {
 	private TibrvQueue queue;
 	private final List<RvDispatcher> dispatchers = new ArrayList<>();
 
-	private final static int threads = 5;
+	private final static int threads = 20;
 	private TibrvCmQueueTransport dq;
 
 	public ListenDQ(final String service, final String network, final String daemon, final String subject)

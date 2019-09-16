@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
     <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
-        <listEntry value="/TibRVPlayground/src/ch/mtrail/tibrv/playground/Send.java"/>
+        <listEntry value="/TibRVPlayground/src/ch/mtrail/multicast/playground/Send.java"/>
     </listAttribute>
     <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
         <listEntry value="1"/>
     </listAttribute>
-    <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="ch.mtrail.tibrv.playground.Send"/>
-    <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-interval 1 -service 7201 -network &quot;;224.1.1.1&quot; &quot;${string_prompt}&quot; HH.TEST.FROM_HH"/>
+    <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="ch.mtrail.multicast.playground.Send"/>
+    <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-interval 500 224.1.90.1 7201 &quot;${string_prompt}&quot;"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="TibRVPlayground"/>
 </launchConfiguration>

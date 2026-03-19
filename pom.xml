@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>ch.mtrail</groupId>
+    <artifactId>tibrv-playground</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>TibRVPlayground</name>
+    <packaging>jar</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+    </properties>
+
+    <!-- Source layout follows existing Ant project layout. -->
+    <build>
+        <sourceDirectory>src</sourceDirectory>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>package-launch-jars</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${project.build.directory}/launch-jars"/>
+
+                                <jar destfile="${project.build.directory}/launch-jars/Listen.jar" basedir="${project.build.outputDirectory}">
+                                    <manifest>
+                                        <attribute name="Main-Class" value="ch.mtrail.tibrv.playground.Listen"/>
+                                    </manifest>
+                                    <zipfileset src="${project.basedir}/lib/tibrvnative.jar"/>
+                                </jar>
+                                <jar destfile="${project.build.directory}/launch-jars/ListenCM.jar" basedir="${project.build.outputDirectory}">
+                                    <manifest>
+                                        <attribute name="Main-Class" value="ch.mtrail.tibrv.playground.ListenCM"/>
+                                    </manifest>
+                                    <zipfileset src="${project.basedir}/lib/tibrvnative.jar"/>
+                                </jar>
+                                <jar destfile="${project.build.directory}/launch-jars/ListenDQ.jar" basedir="${project.build.outputDirectory}">
+                                    <manifest>
+                                        <attribute name="Main-Class" value="ch.mtrail.tibrv.playground.ListenDQ"/>
+                                    </manifest>
+                                    <zipfileset src="${project.basedir}/lib/tibrvnative.jar"/>
+                                </jar>
+                                <jar destfile="${project.build.directory}/launch-jars/ListenDQ_RCS.jar" basedir="${project.build.outputDirectory}">
+                                    <manifest>
+                                        <attribute name="Main-Class" value="ch.mtrail.tibrv.playground.ListenDQ_RCS"/>
+                                    </manifest>
+                                    <zipfileset src="${project.basedir}/lib/tibrvnative.jar"/>
+                                </jar>
+                                <jar destfile="${project.build.directory}/launch-jars/ListenFiles.jar" basedir="${project.build.outputDirectory}">
+                                    <manifest>
+                                        <attribute name="Main-Class" value="ch.mtrail.tibrv.playground.ListenFiles"/>
+                                    </manifest>
+                                    <zipfileset src="${project.basedir}/lib/tibrvnative.jar"/>
+                                </jar>
+                                <jar destfile="${project.build.directory}/launch-jars/ListenFT.jar" basedir="${project.build.outputDirectory}">
+                                    <manifest>
+                                        <attribute name="Main-Class" value="ch.mtrail.tibrv.playground.ListenFT"/>
+                                    </manifest>
+                                    <zipfileset src="${project.basedir}/lib/tibrvnative.jar"/>
+                                </jar>
+                                <jar destfile="${project.build.directory}/launch-jars/ListenMulticast.jar" basedir="${project.build.outputDirectory}">
+                                    <manifest>
+                                        <attribute name="Main-Class" value="ch.mtrail.multicast.playground.Listen"/>
+                                    </manifest>
+                                    <zipfileset src="${project.basedir}/lib/tibrvnative.jar"/>
+                                </jar>
+                                <jar destfile="${project.build.directory}/launch-jars/ListenMultiQueue.jar" basedir="${project.build.outputDirectory}">
+                                    <manifest>
+                                        <attribute name="Main-Class" value="ch.mtrail.tibrv.playground.ListenMultiQueue"/>
+                                    </manifest>
+                                    <zipfileset src="${project.basedir}/lib/tibrvnative.jar"/>
+                                </jar>
+                                <jar destfile="${project.build.directory}/launch-jars/ListenThreadJavaA.jar" basedir="${project.build.outputDirectory}">
+                                    <manifest>
+                                        <attribute name="Main-Class" value="ch.mtrail.tibrv.playground.ListenThreadJavaA"/>
+                                    </manifest>
+                                    <zipfileset src="${project.basedir}/lib/tibrvnative.jar"/>
+                                </jar>
+                                <jar destfile="${project.build.directory}/launch-jars/ListenThreadJavaB.jar" basedir="${project.build.outputDirectory}">
+                                    <manifest>
+                                        <attribute name="Main-Class" value="ch.mtrail.tibrv.playground.ListenThreadJavaB"/>
+                                    </manifest>
+                                    <zipfileset src="${project.basedir}/lib/tibrvnative.jar"/>
+                                </jar>
+                                <jar destfile="${project.build.directory}/launch-jars/ListenThreadRv.jar" basedir="${project.build.outputDirectory}">
+                                    <manifest>
+                                        <attribute name="Main-Class" value="ch.mtrail.tibrv.playground.ListenThreadRv"/>
+                                    </manifest>
+                                    <zipfileset src="${project.basedir}/lib/tibrvnative.jar"/>
+                                </jar>
+                                <jar destfile="${project.build.directory}/launch-jars/MonitorDQ.jar" basedir="${project.build.outputDirectory}">
+                                    <manifest>
+                                        <attribute name="Main-Class" value="ch.mtrail.tibrv.playground.MonitorFT"/>
+                                    </manifest>
+                                    <zipfileset src="${project.basedir}/lib/tibrvnative.jar"/>
+                                </jar>
+                                <jar destfile="${project.build.directory}/launch-jars/MonitorFT.jar" basedir="${project.build.outputDirectory}">
+                                    <manifest>
+                                        <attribute name="Main-Class" value="ch.mtrail.tibrv.playground.MonitorFT"/>
+                                    </manifest>
+                                    <zipfileset src="${project.basedir}/lib/tibrvnative.jar"/>
+                                </jar>
+                                <jar destfile="${project.build.directory}/launch-jars/Send.jar" basedir="${project.build.outputDirectory}">
+                                    <manifest>
+                                        <attribute name="Main-Class" value="ch.mtrail.tibrv.playground.Send"/>
+                                    </manifest>
+                                    <zipfileset src="${project.basedir}/lib/tibrvnative.jar"/>
+                                </jar>
+                                <jar destfile="${project.build.directory}/launch-jars/SendCM.jar" basedir="${project.build.outputDirectory}">
+                                    <manifest>
+                                        <attribute name="Main-Class" value="ch.mtrail.tibrv.playground.SendCM"/>
+                                    </manifest>
+                                    <zipfileset src="${project.basedir}/lib/tibrvnative.jar"/>
+                                </jar>
+                                <jar destfile="${project.build.directory}/launch-jars/SendDdos.jar" basedir="${project.build.outputDirectory}">
+                                    <manifest>
+                                        <attribute name="Main-Class" value="ch.mtrail.tibrv.playground.Send"/>
+                                    </manifest>
+                                    <zipfileset src="${project.basedir}/lib/tibrvnative.jar"/>
+                                </jar>
+                                <jar destfile="${project.build.directory}/launch-jars/SendFiles.jar" basedir="${project.build.outputDirectory}">
+                                    <manifest>
+                                        <attribute name="Main-Class" value="ch.mtrail.tibrv.playground.SendFiles"/>
+                                    </manifest>
+                                    <zipfileset src="${project.basedir}/lib/tibrvnative.jar"/>
+                                </jar>
+                                <jar destfile="${project.build.directory}/launch-jars/SendMulticast.jar" basedir="${project.build.outputDirectory}">
+                                    <manifest>
+                                        <attribute name="Main-Class" value="ch.mtrail.multicast.playground.Send"/>
+                                    </manifest>
+                                    <zipfileset src="${project.basedir}/lib/tibrvnative.jar"/>
+                                </jar>
+                                <jar destfile="${project.build.directory}/launch-jars/SendRequestReply.jar" basedir="${project.build.outputDirectory}">
+                                    <manifest>
+                                        <attribute name="Main-Class" value="ch.mtrail.tibrv.playground.SendRequestReply"/>
+                                    </manifest>
+                                    <zipfileset src="${project.basedir}/lib/tibrvnative.jar"/>
+                                </jar>
+                                <jar destfile="${project.build.directory}/launch-jars/SendStress.jar" basedir="${project.build.outputDirectory}">
+                                    <manifest>
+                                        <attribute name="Main-Class" value="ch.mtrail.tibrv.playground.Send"/>
+                                    </manifest>
+                                    <zipfileset src="${project.basedir}/lib/tibrvnative.jar"/>
+                                </jar>
+                                <jar destfile="${project.build.directory}/launch-jars/SendVideoStream.jar" basedir="${project.build.outputDirectory}">
+                                    <manifest>
+                                        <attribute name="Main-Class" value="ch.mtrail.tibrv.playground.Send"/>
+                                    </manifest>
+                                    <zipfileset src="${project.basedir}/lib/tibrvnative.jar"/>
+                                </jar>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <!-- Install/copy the vendor jar to lib/tibrvj.jar before building. -->
+        <dependency>
+            <groupId>com.tibco</groupId>
+            <artifactId>tibrvnative</artifactId>
+            <version>9.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/tibrvnative.jar</systemPath>
+        </dependency>
+    </dependencies>
+</project>
+
